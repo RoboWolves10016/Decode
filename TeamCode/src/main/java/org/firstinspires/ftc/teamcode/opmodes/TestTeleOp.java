@@ -11,17 +11,21 @@ public class TestTeleOp extends OpMode {
 
     @Override
     public void init() {
-
+        robot = new Robot(hardwareMap);
     }
 
     @Override
     public void start() {
-
+        robot.follower.startTeleopDrive();
     }
 
     @Override
     public void loop() {
-
+        robot.follower.setTeleOpDrive(
+                -gamepad1.left_stick_y,
+                -gamepad1.left_stick_x,
+                -gamepad1.right_stick_x,
+                false);
     }
 
     @Override
