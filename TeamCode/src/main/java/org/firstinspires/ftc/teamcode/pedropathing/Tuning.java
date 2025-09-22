@@ -128,7 +128,9 @@ public class Tuning extends SelectableOpMode {
  */
 class LocalizationTest extends OpMode {
     @Override
-    public void init() {}
+    public void init() {
+        Drawing.init();
+    }
 
     /** This initializes the PoseUpdater, the mecanum drive motors, and the Panels telemetry. */
     @Override

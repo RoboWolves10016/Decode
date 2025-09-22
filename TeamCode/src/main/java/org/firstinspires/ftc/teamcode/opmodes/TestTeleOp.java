@@ -11,7 +11,7 @@ public class TestTeleOp extends OpMode {
 
     @Override
     public void init() {
-        robot = new Robot(hardwareMap);
+//        robot = new Robot(hardwareMap);
     }
 
     @Override
