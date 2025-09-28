@@ -2,9 +2,9 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 public interface ISubsystem {
 
-    public abstract void init();
+    void init();
 
-    public abstract void periodic();
+    void periodic();
 
-    public default void stop() {}
+    default void stop() {}
 }

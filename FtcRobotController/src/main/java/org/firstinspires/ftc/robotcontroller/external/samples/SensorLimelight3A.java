@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package org.firstinspires.ftc.robotcontroller.external.samples;
 
+import com.qualcomm.hardware.limelightvision.LLFieldMap;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.LLStatus;
@@ -42,6 +43,8 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /*
@@ -66,16 +69,35 @@ import java.util.List;
  *   and the ip address the Limelight device assigned the Control Hub and which is displayed in small text
  *   below the name of the Limelight on the top level configuration screen.
  */
-@TeleOp(name = "Sensor: Limelight3A", group = "Sensor")
-@Disabled
+@TeleOp(name = "Limelight Debug", group = "Sensor")
 public class SensorLimelight3A extends LinearOpMode {
 
     private Limelight3A limelight;
 
+    private static final Double[] transform_20 = {0.5877852522924731, -0.8090169943749475, 0d, -1.482, 0.8090169943749475, 0.5877852522924731, 0d, -1.413, 0d, 0d, 1d, 0.749, 0d, 0d, 0d, 1d};
+    private static final Double[] transform_24 = {0.5877852522924731,0.8090169943749475,0d,-1.482,-0.8090169943749475,0.5877852522924731,0d,1.413,0d,0d,1d,0.749,0d,0d,0d,1d};
+    private static final LLFieldMap map = new LLFieldMap(
+            new ArrayList<>(Arrays.asList(
+                    new LLFieldMap.Fiducial(
+                            20,
+                            165.1,
+                            "apriltag3_36h11_classic",
+                            new ArrayList<>(Arrays.asList(transform_20)),
+                            true),
+                    new LLFieldMap.Fiducial(
+                            24,
+                            165.1,
+                            "apriltag3_36h11_classic",
+                            new ArrayList<>(Arrays.asList(transform_24)),
+                            true)
+            )),
+            "ftc");
+
     @Override
-    public void runOpMode() throws InterruptedException
-    {
+    public void runOpMode() throws InterruptedException {
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
+
+        boolean mapUpdated = limelight.uploadFieldmap(map, null);
 
         telemetry.setMsTransmissionInterval(11);
 
@@ -91,11 +113,12 @@ public class SensorLimelight3A extends LinearOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
+            telemetry.addData("Map Updated", mapUpdated);
             LLStatus status = limelight.getStatus();
             telemetry.addData("Name", "%s",
                     status.getName());
             telemetry.addData("LL", "Temp: %.1fC, CPU: %.1f%%, FPS: %d",
-                    status.getTemp(), status.getCpu(),(int)status.getFps());
+                    status.getTemp(), status.getCpu(), (int) status.getFps());
             telemetry.addData("Pipeline", "Index: %d, Type: %s",
                     status.getPipelineIndex(), status.getPipelineType());
 
