@@ -25,14 +25,15 @@ public class Constants {
             .maxPower(1)
             .xVelocity(61.43478129229207)
             .yVelocity(53.57349498777707)
-            .leftFrontMotorName("Wheel0")
-            .rightFrontMotorName("Wheel1")
-            .leftRearMotorName("Wheel2")
-            .rightRearMotorName("Wheel3")
-            .leftFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
-            .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
+            .leftFrontMotorName("Wheel1")
+            .rightFrontMotorName("Wheel2")
+            .leftRearMotorName("Wheel3")
+            .rightRearMotorName("Wheel4")
+            .leftFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
+            .rightFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
             .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
-            .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD);
+            .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
+            .useBrakeModeInTeleOp(true);
 
     public static PinpointConstants pinpointConstants = new PinpointConstants()
             .distanceUnit(DistanceUnit.METER)

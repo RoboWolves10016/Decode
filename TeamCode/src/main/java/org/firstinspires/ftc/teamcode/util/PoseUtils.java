@@ -1,19 +1,27 @@
 package org.firstinspires.ftc.teamcode.util;
 
+import com.pedropathing.ftc.InvertedFTCCoordinates;
+import com.pedropathing.geometry.PedroCoordinates;
 import com.pedropathing.geometry.Pose;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
 public class PoseUtils {
+
+    public static final double FIELD_WIDTH_METERS = 3.6576;
 
     public static Pose fromPose3d(Pose3D original) {
         return new Pose(
                 original.getPosition().x,
                 original.getPosition().y,
-                original.getOrientation().getYaw(AngleUnit.RADIANS)
-        );
+                original.getOrientation().getYaw(AngleUnit.RADIANS),
+                InvertedFTCCoordinates.INSTANCE
+        ).getAsCoordinateSystem(PedroCoordinates.INSTANCE);
+    }
+    public static boolean isInField(Pose pose) {
+        return Math.abs(pose.getX())< FIELD_WIDTH_METERS / 2
+                && Math.abs(pose.getY()) < FIELD_WIDTH_METERS / 2;
     }
 
     public static String poseToString(Pose pose) {

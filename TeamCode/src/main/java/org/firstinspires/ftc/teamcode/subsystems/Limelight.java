@@ -1,39 +1,39 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import com.bylazar.telemetry.PanelsTelemetry;
+import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.geometry.Pose;
-import com.qualcomm.hardware.limelightvision.LLFieldMap;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.LLStatus;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.teamcode.util.Pattern;
 import org.firstinspires.ftc.teamcode.util.PoseUtils;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.Locale;
 
 public class Limelight implements ISubsystem {
 
     private final HardwareMap hwMap;
-    private final Telemetry telemetry;
+    private final TelemetryManager telemetry;
+
+    private final ElapsedTime timeSinceLastPose;
 
     private Limelight3A limelight;
     private Pose pose = new Pose(0,0,0);
 
-    private int obeliskID;
+    private static int obeliskID;
 
     private boolean valid;
 
     public Limelight(HardwareMap hwMap, Telemetry telemetry) {
         this.hwMap = hwMap;
-        this.telemetry = telemetry;
+        this.telemetry = PanelsTelemetry.INSTANCE.getTelemetry();
+        this.timeSinceLastPose = new ElapsedTime();
         telemetry.setMsTransmissionInterval(11);
     }
 
@@ -42,25 +42,26 @@ public class Limelight implements ISubsystem {
         limelight = hwMap.get(Limelight3A.class, "limelight");
         limelight.pipelineSwitch(0);
         limelight.start();
+        timeSinceLastPose.reset();
     }
 
     @Override
     public void periodic() {
         // Publish basic telemetry status info
         LLStatus status = limelight.getStatus();
-        telemetry.addData("Name", "%s",
-                status.getName());
-        telemetry.addData("LL", "Temp: %.1fC, CPU: %.1f%%, FPS: %d",
-                status.getTemp(), status.getCpu(), (int) status.getFps());
-        telemetry.addData("Pipeline", "Index: %d, Type: %s",
-                status.getPipelineIndex(), status.getPipelineType());
+        telemetry.addData("Name", String.format("%s", status.getName()));
+        telemetry.addData("LL", String.format(Locale.US,"Temp: %.1fC, CPU: %.1f%%, FPS: %d",
+                status.getTemp(), status.getCpu(), (int) status.getFps()));
+        telemetry.addData("Pipeline", String.format(Locale.US, "Index: %d, Type: %s",
+                status.getPipelineIndex(), status.getPipelineType()));
 
         LLResult result = limelight.getLatestResult();
 
         // If a valid result, update variables
         if (result.isValid()) {
-            if (result.getBotpose() != null)
+            if (result.getBotpose() != null) {
                 pose = PoseUtils.fromPose3d(result.getBotpose());
+            }
 
             // Set obelisk AprilTag ID if visible
             for (LLResultTypes.FiducialResult r : result.getFiducialResults()) {
@@ -71,14 +72,16 @@ public class Limelight implements ISubsystem {
         }
 
         valid = checkValidity(result);
+        if (valid) timeSinceLastPose.reset();
         updateTelemetry();
     }
 
     private void updateTelemetry() {
+        telemetry.addLine("--------------LIMELIGHT--------------");
         telemetry.addData("Pose", PoseUtils.poseToString(pose));
         telemetry.addData("Pattern", getPattern());
-        telemetry.addData("Is Pose Valid:", valid);
-        telemetry.update();
+        telemetry.addData("Is Pose Valid", valid);
+        telemetry.addData("Time Since Last Pose", timeSinceLastPose.seconds());
     }
 
     public Pose getPose() {
@@ -100,7 +103,9 @@ public class Limelight implements ISubsystem {
         for (LLResultTypes.FiducialResult r : result.getFiducialResults()) {
             if (r.getFiducialId() == 20 || r.getFiducialId() == 24) tagIdCheck = true;
         }
-        return result.isValid() && result.getBotposeAvgArea() > 0.01 && tagIdCheck;
+        return result.isValid()
+                && result.getBotposeAvgArea() > 1
+                && tagIdCheck && PoseUtils.isInField(pose);
     }
 
     public boolean isValid() {
