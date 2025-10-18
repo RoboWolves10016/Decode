@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
-import com.pedropathing.Drivetrain;
-import com.pedropathing.ftc.drivetrains.Mecanum;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -14,11 +12,11 @@ public class Test extends OpMode {
 
     @Override
     public void init() {
-        limelight = new Limelight(hardwareMap, telemetry);
+        limelight = new Limelight(hardwareMap);
     }
 
     @Override
     public void loop() {
-        limelight.periodic();
+        limelight.run();
     }
 }
