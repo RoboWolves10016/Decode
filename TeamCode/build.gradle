@@ -25,4 +25,19 @@ android {
 
 dependencies {
     implementation project(':FtcRobotController')
+    implementation "org.solverslib:core:SNAPSHOT-7cdcc66" // core
+    implementation "org.solverslib:pedroPathing:SNAPSHOT-7cdcc66" // pedroPathing
+    compileOnly("org.projectlombok:lombok:1.18.42")
+    annotationProcessor("org.projectlombok:lombok:1.18.42")
+
+}
+
+repositories {
+    maven {
+        url "https://repo.dairy.foundation/releases"
+    }
+    maven {
+        url "https://repo.dairy.foundation/snapshots"
+    }
+
 }

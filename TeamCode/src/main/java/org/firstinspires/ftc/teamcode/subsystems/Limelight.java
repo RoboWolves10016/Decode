@@ -10,31 +10,30 @@ import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.RobotState;
 import org.firstinspires.ftc.teamcode.util.Pattern;
 import org.firstinspires.ftc.teamcode.util.PoseUtils;
 
 import java.util.Locale;
 
-public class Limelight implements ISubsystem {
+public class Limelight extends Subsystem {
 
     private final HardwareMap hwMap;
     private final TelemetryManager telemetry;
+    private final RobotState robotState;
 
     private final ElapsedTime timeSinceLastPose;
 
     private Limelight3A limelight;
     private Pose pose = new Pose(0,0,0);
 
-    private static int obeliskID;
-
     private boolean valid;
 
-    public Limelight(HardwareMap hwMap, Telemetry telemetry) {
+    public Limelight(HardwareMap hwMap) {
         this.hwMap = hwMap;
         this.telemetry = PanelsTelemetry.INSTANCE.getTelemetry();
         this.timeSinceLastPose = new ElapsedTime();
-        telemetry.setMsTransmissionInterval(11);
+        this.robotState = RobotState.getInstance();
     }
 
     @Override
@@ -46,14 +45,14 @@ public class Limelight implements ISubsystem {
     }
 
     @Override
-    public void periodic() {
+    public void run() {
         // Publish basic telemetry status info
-        LLStatus status = limelight.getStatus();
-        telemetry.addData("Name", String.format("%s", status.getName()));
-        telemetry.addData("LL", String.format(Locale.US,"Temp: %.1fC, CPU: %.1f%%, FPS: %d",
-                status.getTemp(), status.getCpu(), (int) status.getFps()));
-        telemetry.addData("Pipeline", String.format(Locale.US, "Index: %d, Type: %s",
-                status.getPipelineIndex(), status.getPipelineType()));
+//        LLStatus status = limelight.getStatus();
+//        telemetry.addData("Name", String.format("%s", status.getName()));
+//        telemetry.addData("LL", String.format(Locale.US,"Temp: %.1fC, CPU: %.1f%%, FPS: %d",
+//                status.getTemp(), status.getCpu(), (int) status.getFps()));
+//        telemetry.addData("Pipeline", String.format(Locale.US, "Index: %d, Type: %s",
+//                status.getPipelineIndex(), status.getPipelineType()));
 
         LLResult result = limelight.getLatestResult();
 
@@ -63,10 +62,18 @@ public class Limelight implements ISubsystem {
                 pose = PoseUtils.fromPose3d(result.getBotpose());
             }
 
-            // Set obelisk AprilTag ID if visible
+            // Set obelisk pattern if visible
             for (LLResultTypes.FiducialResult r : result.getFiducialResults()) {
                 if (r.getFiducialId() >= 21 && r.getFiducialId() <= 23) {
-                    obeliskID = r.getFiducialId();
+                    int obeliskID = r.getFiducialId();
+                    if (obeliskID == 21) {
+                        robotState.setPattern(Pattern.GPP);
+                    } else if (obeliskID == 22){
+                        robotState.setPattern(Pattern.PGP);
+                    } else {
+                        robotState.setPattern(Pattern.PPG);
+                    }
+
                 }
             }
         }
@@ -74,28 +81,17 @@ public class Limelight implements ISubsystem {
         valid = checkValidity(result);
         if (valid) timeSinceLastPose.reset();
         updateTelemetry();
+
+        // Update state variables so other subsystems can access data
+        robotState.setVisionPose(valid ? pose : null);
     }
 
-    private void updateTelemetry() {
+    @Override
+    public void updateTelemetry() {
         telemetry.addLine("--------------LIMELIGHT--------------");
         telemetry.addData("Pose", PoseUtils.poseToString(pose));
-        telemetry.addData("Pattern", getPattern());
         telemetry.addData("Is Pose Valid", valid);
         telemetry.addData("Time Since Last Pose", timeSinceLastPose.seconds());
-    }
-
-    public Pose getPose() {
-        return pose;
-    }
-
-    public Pattern getPattern() {
-        if (obeliskID == 21) {
-            return Pattern.GPP;
-        } else if (obeliskID == 22){
-            return Pattern.PGP;
-        } else {
-            return Pattern.PPG;
-        }
     }
 
     private boolean checkValidity(LLResult result) {
@@ -104,12 +100,8 @@ public class Limelight implements ISubsystem {
             if (r.getFiducialId() == 20 || r.getFiducialId() == 24) tagIdCheck = true;
         }
         return result.isValid()
-                && result.getBotposeAvgArea() > 1
+                && result.getBotposeAvgArea() > 0.4
                 && tagIdCheck && PoseUtils.isInField(pose);
-    }
-
-    public boolean isValid() {
-        return false;
     }
 
     @Override

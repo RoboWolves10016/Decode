@@ -1,64 +1,95 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
+import android.widget.Button;
+
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.seattlesolvers.solverslib.command.button.GamepadButton;
+import com.seattlesolvers.solverslib.command.button.Trigger;
+import com.seattlesolvers.solverslib.gamepad.ButtonReader;
+import com.seattlesolvers.solverslib.gamepad.GamepadEx;
+import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 
 import org.firstinspires.ftc.teamcode.Constants;
+import org.firstinspires.ftc.teamcode.Robot;
+import org.firstinspires.ftc.teamcode.RobotState;
+import org.firstinspires.ftc.teamcode.subsystems.Drive;
+import org.firstinspires.ftc.teamcode.subsystems.Intake;
+import org.firstinspires.ftc.teamcode.subsystems.Launcher;
 import org.firstinspires.ftc.teamcode.subsystems.Limelight;
+import org.firstinspires.ftc.teamcode.subsystems.Spindexer;
 import org.firstinspires.ftc.teamcode.util.Alliance;
 
+import java.security.PrivateKey;
 import java.util.function.Supplier;
 
 @TeleOp(name = "TeleOp", group = "Competition")
 public class Teleop extends OpMode {
 
     // These two static variables will be set in the stop() method of any auton OpMode ran before this.
-    public static Pose startingPose;
-    public static Alliance startingAlliance = Alliance.BLUE;
-
     private final TelemetryManager telemetryManager = PanelsTelemetry.INSTANCE.getTelemetry();
     public boolean autoAimEnabled = false;
-    public Supplier<Double> rotationSupplier;
-    private Follower follower;
+    private Drive drivetrain;
     private Limelight limelight;
+    private Spindexer spindexer;
+    private Intake intake;
+    private Launcher launcher;
+
+    private GamepadEx driver;
+    private GamepadEx operator;
 
     @Override
     public void init() {
-        follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(startingPose == null ? new Pose() : startingPose);
-        follower.update();
+        driver = new GamepadEx(gamepad1);
+        operator = new GamepadEx(gamepad2);
 
-        limelight = new Limelight(hardwareMap, telemetry);
+        drivetrain = new Drive(hardwareMap, driver);
+
+        limelight = new Limelight(hardwareMap);
         limelight.init();
 
-        rotationSupplier = () -> autoAimEnabled ? 0d : -gamepad1.right_stick_x;
+        spindexer = new Spindexer(hardwareMap);
+        spindexer.init();
+
+        intake = new Intake(hardwareMap);
+        intake.init();
+
+        launcher = new Launcher(hardwareMap);
+        launcher.init();
+
+        telemetryManager.addLine("OpMode Initialization Completed!!!");
+        telemetryManager.update(telemetry);
     }
 
     @Override
     public void start() {
-        follower.startTeleopDrive();
+        drivetrain.startTeleop();
     }
 
     @Override
     public void loop() {
+        RobotState.getInstance().addTelemetry(telemetryManager);
+        processInputs();
         // Loop each subsystem besides follower here
-        limelight.periodic();
-
+        intake.run();
+        spindexer.run();
+        launcher.run();
+        limelight.run();
 
         // Control drivetrain after other subsystems are run
-        follower.update();
-        follower.setTeleOpDrive(
-                -gamepad1.left_stick_y,
-                -gamepad1.left_stick_x,
-                rotationSupplier.get(),
-                false);
+        drivetrain.run();
 
         // Update telemetry to panels and Driver Station
         telemetryManager.update(telemetry);
+    }
+
+    private void processInputs() {
+        intake.setIntake(gamepad2.left_trigger > 0.1);
+        drivetrain.setAutoAim(gamepad1.right_bumper);
     }
 
     @Override
