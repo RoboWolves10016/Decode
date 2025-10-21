@@ -10,6 +10,9 @@ import org.firstinspires.ftc.teamcode.util.Alliance;
 import org.firstinspires.ftc.teamcode.util.Interpolation;
 import com.bylazar.telemetry.TelemetryManager;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.seattlesolvers.solverslib.controller.PIDController;
+import com.seattlesolvers.solverslib.controller.PIDFController;
+import com.seattlesolvers.solverslib.controller.wpilibcontroller.SimpleMotorFeedforward;
 import com.seattlesolvers.solverslib.hardware.motors.Motor;
 import com.seattlesolvers.solverslib.hardware.motors.MotorEx;
 
@@ -25,6 +28,9 @@ public class Launcher extends Subsystem {
 
     private MotorEx motor;
 
+    private final PIDFController velocityController = new PIDFController(0, 0, 0, 0);
+
+    private SimpleMotorFeedforward feedforward = new SimpleMotorFeedforward(0, 0, 0);
 
     public static double targetRpm = 0;
     private double currentRpm = 0;
@@ -50,6 +56,9 @@ public class Launcher extends Subsystem {
         motor.setRunMode(Motor.RunMode.VelocityControl);
         motor.setVeloCoefficients(kP, kI, kD);
         motor.setFeedforwardCoefficients(0, kV, 0);
+        velocityController.setPIDF(kP, kI, kD, 0);
+        feedforward = new SimpleMotorFeedforward(kS, kV, kA);
+
     }
 
     @Override
@@ -58,8 +67,13 @@ public class Launcher extends Subsystem {
         motor.setFeedforwardCoefficients(kS, kV, kA);
         distanceToGoal = robotState.getVectorToGoal().getMagnitude();
 //        targetRpm = distanceToRpm(distanceToGoal);
-        currentRpm = (motor.getVelocity() / 28) * 60;
-        motor.set(targetRpm);
+        currentRpm = (motor.getCorrectedVelocity() / 28) * 60;
+//        motor.set(targetRpm);
+
+        velocityController.setPIDF(kP, kI, kD, 0);
+        feedforward = new SimpleMotorFeedforward(kS, kV, kA);
+
+        motor.set(velocityController.calculate(currentRpm, targetRpm) + feedforward.calculate(currentRpm));
         updateTelemetry();
     }
 
