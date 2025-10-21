@@ -38,19 +38,17 @@ public class RobotState {
     @Setter
     private Pattern pattern = Pattern.GPP;
 
-    private Pose pose = new Pose();
-
+    private Pose pose;
+    {
+        setPose(new Pose());
+    }
 
     public void setPose(Pose pose) {
         this.pose = pose;
         this.vectorToGoal = alliance.goalPose.minus(pose).getAsVector();
-        this.vectorToGoal.rotateVector(-pose.getHeading());
     }
 
-    private Vector vectorToGoal = alliance.goalPose.minus(pose).getAsVector();;
-    {
-        vectorToGoal.rotateVector(-pose.getHeading());
-    }
+    private Vector vectorToGoal;
 
     @Setter @Nullable
     private Pose visionPose = null;
