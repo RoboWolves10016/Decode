@@ -33,7 +33,9 @@ public class Launcher extends Subsystem {
     public static double kP = 0.00003;
     public static double kI = 200.0;
     public static double kD = 0.000001;
+    public static double kS = 0;
     public static double kV = 0.00019;
+    public static double kA = 0;
 
     public Launcher(HardwareMap hwMap) {
         this.hwMap = hwMap;
@@ -53,7 +55,7 @@ public class Launcher extends Subsystem {
     @Override
     public void run() {
         motor.setVeloCoefficients(kP, kI, kD);
-        motor.setFeedforwardCoefficients(0, kV, 0);
+        motor.setFeedforwardCoefficients(kS, kV, kA);
         distanceToGoal = robotState.getVectorToGoal().getMagnitude();
 //        targetRpm = distanceToRpm(distanceToGoal);
         currentRpm = (motor.getVelocity() / 28) * 60;
