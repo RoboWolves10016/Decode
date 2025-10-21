@@ -52,8 +52,8 @@ public class Launcher extends Subsystem {
 
     @Override
     public void run() {
-//        motor.setVeloCoefficients(kP, kI, kD);
-//        motor.setFeedforwardCoefficients(0, kV, 0);
+        motor.setVeloCoefficients(kP, kI, kD);
+        motor.setFeedforwardCoefficients(0, kV, 0);
         distanceToGoal = robotState.getVectorToGoal().getMagnitude();
 //        targetRpm = distanceToRpm(distanceToGoal);
         currentRpm = (motor.getVelocity() / 28) * 60;
