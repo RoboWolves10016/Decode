@@ -6,17 +6,15 @@ import com.bylazar.telemetry.PanelsTelemetry;
 
 import org.firstinspires.ftc.teamcode.RobotState;
 import org.firstinspires.ftc.teamcode.Tuning;
-import org.firstinspires.ftc.teamcode.util.Alliance;
 import org.firstinspires.ftc.teamcode.util.Interpolation;
 import com.bylazar.telemetry.TelemetryManager;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.seattlesolvers.solverslib.controller.PIDController;
 import com.seattlesolvers.solverslib.controller.PIDFController;
 import com.seattlesolvers.solverslib.controller.wpilibcontroller.SimpleMotorFeedforward;
 import com.seattlesolvers.solverslib.hardware.motors.Motor;
 import com.seattlesolvers.solverslib.hardware.motors.MotorEx;
 
-import java.util.function.Supplier;
+import lombok.Setter;
 
 @Configurable
 public class Launcher extends Subsystem {
@@ -43,6 +41,14 @@ public class Launcher extends Subsystem {
     public static double kV = 0.0002;
     public static double kA = 0;
 
+    public enum LauncherState {
+        IDLE,
+        AUTO,
+        PRESET
+    }
+
+    private LauncherState state = LauncherState.IDLE;
+
     public Launcher(HardwareMap hwMap) {
         this.hwMap = hwMap;
         telemetry = PanelsTelemetry.INSTANCE.getTelemetry();
@@ -54,8 +60,6 @@ public class Launcher extends Subsystem {
         motor.setInverted(true);
         motor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
         motor.setRunMode(Motor.RunMode.RawPower);
-//        motor.setVeloCoefficients(kP, kI, kD);
-//        motor.setFeedforwardCoefficients(0, kV, 0);
         velocityController.setPIDF(kP, kI, kD, 0);
         feedforward = new SimpleMotorFeedforward(kS, kV, kA);
 
@@ -63,12 +67,21 @@ public class Launcher extends Subsystem {
 
     @Override
     public void run() {
-        motor.setVeloCoefficients(kP, kI, kD);
-        motor.setFeedforwardCoefficients(kS, kV, kA);
         distanceToGoal = robotState.getVectorToGoal().getMagnitude();
-//        targetRpm = distanceToRpm(distanceToGoal);
+        switch (state) {
+            case IDLE:
+                targetRpm = 0;
+                break;
+            case AUTO:
+                targetRpm = distanceToRpm(distanceToGoal);
+                break;
+            case PRESET:
+                targetRpm = 3000;
+                break;
+        }
+
+
         currentRpm = (motor.getCorrectedVelocity() / 28) * 60;
-//        motor.set(targetRpm);
 
         velocityController.setPIDF(kP, kI, kD, 0);
         feedforward = new SimpleMotorFeedforward(kS, kV, kA);
@@ -83,6 +96,7 @@ public class Launcher extends Subsystem {
         telemetry.addData("Distance to Goal", distanceToGoal);
         telemetry.addData("Current RPM", currentRpm);
         telemetry.addData("Target RPM", targetRpm);
+        telemetry.addData("State", state);
 
     }
 
@@ -93,6 +107,17 @@ public class Launcher extends Subsystem {
 
     private double distanceToRpm(double distanceInches) {
         return Interpolation.interpolate(Tuning.DISTANCED_FROM_GOAL_FEET, Tuning.REVOLUTIONS_PER_MINUTE, distanceInches / 12);
+    }
+
+    public void setAuto() {
+        state = LauncherState.AUTO;
+    }
+
+    public void setIdle() {
+        state = LauncherState.IDLE;
+    }
+    public void setPreset() {
+        state = LauncherState.PRESET;
     }
 
     public boolean isReady() {

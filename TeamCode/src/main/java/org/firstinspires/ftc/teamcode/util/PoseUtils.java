@@ -10,19 +10,21 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
 public class PoseUtils {
 
-    public static final double FIELD_WIDTH_METERS = 3.6576;
+    public static final double FIELD_WIDTH_INCHES = 144;
 
     public static Pose fromPose3d(Pose3D original) {
-        return new Pose(
-                original.getPosition().x,
-                original.getPosition().y,
+        Pose pose = new Pose(
+                toInches(original.getPosition().y) + 72,
+                -toInches(original.getPosition().x) + 72,
                 original.getOrientation().getYaw(AngleUnit.RADIANS),
-                InvertedFTCCoordinates.INSTANCE
-        ).getAsCoordinateSystem(PedroCoordinates.INSTANCE);
+                PedroCoordinates.INSTANCE
+        );
+        return pose.setHeading((pose.getHeading() + Math.PI) % (2 * Math.PI));
     }
+
     public static boolean isInField(Pose pose) {
-        return Math.abs(pose.getX()) < FIELD_WIDTH_METERS / 2
-                && Math.abs(pose.getY()) < FIELD_WIDTH_METERS / 2;
+        return pose.getX() > 0 && pose.getX() < FIELD_WIDTH_INCHES
+                && pose.getY() > 0 && pose.getY() < FIELD_WIDTH_INCHES;
     }
 
     public static String poseToString(Pose pose) {
@@ -46,5 +48,9 @@ public class PoseUtils {
         } else {
             return Math.ceil(d * precision) / precision;
         }
+    }
+
+    public static double toInches(double meters) {
+        return meters * 100 / 2.54;
     }
 }

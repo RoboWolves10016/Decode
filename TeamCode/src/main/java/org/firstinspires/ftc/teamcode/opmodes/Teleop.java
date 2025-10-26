@@ -1,13 +1,14 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
-import android.widget.Button;
-
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.util.ElapsedTime;
+import com.seattlesolvers.solverslib.command.button.Button;
 import com.seattlesolvers.solverslib.command.button.GamepadButton;
 import com.seattlesolvers.solverslib.command.button.Trigger;
 import com.seattlesolvers.solverslib.gamepad.ButtonReader;
@@ -19,12 +20,14 @@ import org.firstinspires.ftc.teamcode.Robot;
 import org.firstinspires.ftc.teamcode.RobotState;
 import org.firstinspires.ftc.teamcode.subsystems.Drive;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
+import org.firstinspires.ftc.teamcode.subsystems.Kicker;
 import org.firstinspires.ftc.teamcode.subsystems.Launcher;
 import org.firstinspires.ftc.teamcode.subsystems.Limelight;
 import org.firstinspires.ftc.teamcode.subsystems.Spindexer;
 import org.firstinspires.ftc.teamcode.util.Alliance;
 
 import java.security.PrivateKey;
+import java.util.List;
 import java.util.function.Supplier;
 
 @TeleOp(name = "TeleOp", group = "Competition")
@@ -38,12 +41,19 @@ public class Teleop extends OpMode {
     private Spindexer spindexer;
     private Intake intake;
     private Launcher launcher;
+    private Kicker kicker;
 
     private GamepadEx driver;
     private GamepadEx operator;
 
     @Override
     public void init() {
+
+        List<LynxModule> hubs = hardwareMap.getAll(LynxModule.class);
+        for (int i = 0; i < hubs.size(); ++i) {
+            hubs.get(i).setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+        }
+
         driver = new GamepadEx(gamepad1);
         operator = new GamepadEx(gamepad2);
 
@@ -55,14 +65,14 @@ public class Teleop extends OpMode {
         spindexer = new Spindexer(hardwareMap);
         spindexer.init();
 
+        kicker = new Kicker(hardwareMap);
+        kicker.init();
+
         intake = new Intake(hardwareMap);
         intake.init();
 
         launcher = new Launcher(hardwareMap);
         launcher.init();
-
-        telemetryManager.addLine("OpMode Initialization Completed!!!");
-        telemetryManager.update(telemetry);
     }
 
     @Override
@@ -77,6 +87,7 @@ public class Teleop extends OpMode {
         // Loop each subsystem besides follower here
         intake.run();
         spindexer.run();
+        kicker.run();
         launcher.run();
         limelight.run();
 
@@ -87,9 +98,33 @@ public class Teleop extends OpMode {
         telemetryManager.update(telemetry);
     }
 
+    @Override
+    public void init_loop() {
+        if (driver.getButton(GamepadKeys.Button.B)) RobotState.getInstance().setAlliance(Alliance.RED);
+        if (driver.getButton(GamepadKeys.Button.X)) RobotState.getInstance().setAlliance(Alliance.BLUE);
+
+        telemetryManager.addLine("OpMode Initialization Completed!!!");
+        telemetryManager.addData("Alliance", RobotState.getInstance().getAlliance());
+        telemetryManager.update(telemetry);
+
+    }
+
     private void processInputs() {
         intake.setIntake(gamepad2.left_trigger > 0.1);
         drivetrain.setAutoAim(gamepad1.right_bumper);
+        if(gamepad2.right_bumper/*operator.wasJustPressed(GamepadKeys.Button.RIGHT_BUMPER)*/) {
+            spindexer.stepClockwise();
+        }
+        if(gamepad2.left_bumper/*operator.wasJustPressed(GamepadKeys.Button.LEFT_BUMPER)*/) {
+            spindexer.stepCounterClockwise();
+        }
+
+        if (operator.getButton(GamepadKeys.Button.A)) launcher.setAuto();
+
+        if (operator.getButton(GamepadKeys.Button.B)) launcher.setIdle();
+        if (operator.getButton(GamepadKeys.Button.X)) launcher.setPreset();
+
+        if (operator.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.1) kicker.feed();
     }
 
     @Override

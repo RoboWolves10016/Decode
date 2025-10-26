@@ -101,7 +101,8 @@ public class Limelight extends Subsystem {
         }
         return result.isValid()
                 && result.getBotposeAvgArea() > 0.4
-                && tagIdCheck && PoseUtils.isInField(pose);
+                && tagIdCheck && PoseUtils.isInField(pose)
+                && robotState.isNotMoving();
     }
 
     @Override

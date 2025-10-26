@@ -21,7 +21,6 @@ public class RobotState {
 
     private static RobotState instance;
 
-//    private final PanelsField field = PanelsField.INSTANCE;
 
     public static RobotState getInstance() {
         if (instance == null) {
@@ -43,6 +42,12 @@ public class RobotState {
         setPose(new Pose());
     }
 
+    @Setter
+    private boolean kickerSafe = true;
+
+    @Setter
+    private boolean spindexerAligned = false;
+
     public void setPose(Pose pose) {
         this.pose = pose;
         this.vectorToGoal = alliance.goalPose.minus(pose).getAsVector();
@@ -53,12 +58,19 @@ public class RobotState {
     @Setter @Nullable
     private Pose visionPose = null;
 
+    @Setter
+    private boolean notMoving = true;
+
     public void addTelemetry(TelemetryManager telemetry) {
         telemetry.addLine("--------------ROBOT STATE--------------");
         telemetry.addData("Alliance", alliance.toString());
         telemetry.addData("Pattern", pattern.toString());
         telemetry.addData("Pose", poseToString(pose));
+        telemetry.addData("Goal Pose", poseToString(alliance.goalPose));
         telemetry.addData("Vision Pose", visionPose == null ? "None" : poseToString(visionPose));
         telemetry.addData("Vector to Goal", vectorToGoal == null ? "None" : vectorToString(vectorToGoal));
+        telemetry.addData("Is Kicker Safe?", kickerSafe);
+        telemetry.addData("Is Spindexer Aligned", spindexerAligned);
+
     }
 }
