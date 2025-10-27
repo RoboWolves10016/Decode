@@ -59,6 +59,7 @@ public class BlueGoal extends OpMode {
     @Override
     public void loop() {
         follower.followPath(pathChain);
+        follower.update();
 
         if (!follower.isBusy() && !doneLaunching) {
             kicker.feed();
