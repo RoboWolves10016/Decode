@@ -41,7 +41,7 @@ public class BlueGoal extends OpMode {
         kicker = new Kicker(hardwareMap);
 
         robotState.setAlliance(Alliance.BLUE);
-        follower.setPose(new Pose(26, 130, Math.toRadians(144)));
+        follower.setStartingPose(new Pose(26, 130, Math.toRadians(144)));
         pathChain = createPathChain(follower);
     }
 
