@@ -62,7 +62,6 @@ public class Launcher extends Subsystem {
         motor.setRunMode(Motor.RunMode.RawPower);
         velocityController.setPIDF(kP, kI, kD, 0);
         feedforward = new SimpleMotorFeedforward(kS, kV, kA);
-
     }
 
     @Override

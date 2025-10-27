@@ -50,6 +50,14 @@ public class PoseUtils {
         }
     }
 
+    // Returns the given heading bounded between 0 and 2*PI
+    public static double normalizeHeading(double heading) {
+        while (heading < 0) {
+            heading += 2 * Math.PI;
+        }
+        return heading % 2 * Math.PI;
+    }
+
     public static double toInches(double meters) {
         return meters * 100 / 2.54;
     }

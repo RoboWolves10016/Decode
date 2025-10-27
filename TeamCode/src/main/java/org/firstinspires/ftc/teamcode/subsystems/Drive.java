@@ -13,16 +13,22 @@ import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 
 import org.firstinspires.ftc.teamcode.Constants;
 import org.firstinspires.ftc.teamcode.RobotState;
+import org.firstinspires.ftc.teamcode.util.PoseUtils;
 
+import lombok.Getter;
 import lombok.Setter;
 
 public class Drive extends Subsystem{
     private final TelemetryManager telemetry;
+
+    @Getter
     public Follower follower;
 
     private RobotState robotState;
 
     private boolean teleop = false;
+    @Setter
+    private boolean robotCentric = false;
     @Setter
     private boolean autoAim = false;
 
@@ -54,7 +60,7 @@ public class Drive extends Subsystem{
 
         forwardCommand = driver.getLeftY();
         strafeCommand = -driver.getLeftX();
-        headingToGoal = robotState.getVectorToGoal().getTheta();
+        headingToGoal = PoseUtils.normalizeHeading(robotState.getVectorToGoal().getTheta());
 
         robotState.setNotMoving(
                 follower.getVelocity().getMagnitude() < 1
@@ -71,9 +77,17 @@ public class Drive extends Subsystem{
         if (teleop) {
             turnCommand = -driver.getRightX();
             if (autoAim) {
+                double heading = PoseUtils.normalizeHeading(follower.getHeading());
+                double targetHeading = headingToGoal;
+                if (heading - targetHeading > Math.PI) {
+                    targetHeading += 2 * Math.PI;
+                }
+                if (targetHeading - heading > Math.PI) {
+                    heading += 2 * Math.PI;
+                }
                 turnCommand = rotationController.calculate(
-                        follower.getHeading(),
-                        headingToGoal
+                        heading,
+                        targetHeading
                 );
             }
 
@@ -81,8 +95,8 @@ public class Drive extends Subsystem{
                     forwardCommand,
                     strafeCommand,
                     turnCommand,
-                    false,
-                    robotState.getAlliance().driverForwardHeading
+                    robotCentric,
+                    robotCentric ? 0 : robotState.getAlliance().driverForwardHeading
             );
         }
         follower.update();
@@ -107,5 +121,9 @@ public class Drive extends Subsystem{
         teleop = true;
 
         follower.startTeleopDrive();
+    }
+
+    public void setPose(Pose newPose) {
+        follower.setPose(newPose);
     }
 }

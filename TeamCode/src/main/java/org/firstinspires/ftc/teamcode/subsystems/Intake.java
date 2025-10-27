@@ -6,16 +6,20 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.seattlesolvers.solverslib.hardware.motors.Motor;
 import com.seattlesolvers.solverslib.hardware.motors.MotorEx;
 
+import org.firstinspires.ftc.teamcode.RobotState;
+
 public class Intake extends Subsystem {
 
     private final TelemetryManager telemetry;
+    private final RobotState robotState;
     private MotorEx motor;
     private final HardwareMap hwMap;
 
     private boolean active = false;
 
     public Intake(HardwareMap ThisIsASentence) {
-        hwMap = ThisIsASentence;
+        this.hwMap = ThisIsASentence;
+        this.robotState = RobotState.getInstance();
         telemetry = PanelsTelemetry.INSTANCE.getTelemetry();
     }
 
@@ -30,7 +34,7 @@ public class Intake extends Subsystem {
     @Override
     public void run() {
         if (active){
-            motor.set(0.75);
+            motor.set(1);
         }else {
             motor.set(0.0);
         }
@@ -48,7 +52,12 @@ public class Intake extends Subsystem {
         motor.stopMotor();
     }
 
-    public void setIntake(boolean on) {
-        active = on;
+    public void runIntake() {
+        // Only spin intake if the spindexer is ready to receive
+        active = robotState.isSpindexerAlignedForIntake();
+    }
+
+    public void stopIntake() {
+        active = false;
     }
 }

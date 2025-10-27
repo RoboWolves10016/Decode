@@ -10,8 +10,13 @@ import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.math.Vector;
 
+import org.firstinspires.ftc.teamcode.subsystems.ColorSensors;
 import org.firstinspires.ftc.teamcode.util.Alliance;
 import org.firstinspires.ftc.teamcode.util.Pattern;
+import org.firstinspires.ftc.teamcode.util.SpindexerSlot;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -46,7 +51,10 @@ public class RobotState {
     private boolean kickerSafe = true;
 
     @Setter
-    private boolean spindexerAligned = false;
+    private boolean spindexerAlignedForLaunch = false;
+
+    @Setter
+    private boolean spindexerAlignedForIntake = false;
 
     public void setPose(Pose pose) {
         this.pose = pose;
@@ -61,6 +69,11 @@ public class RobotState {
     @Setter
     private boolean notMoving = true;
 
+    @Setter
+    SpindexerSlot currentSlot = SpindexerSlot.ONE;
+    @Setter
+    private ColorSensors.BallState currentSlotBallState = ColorSensors.BallState.EMPTY;
+
     public void addTelemetry(TelemetryManager telemetry) {
         telemetry.addLine("--------------ROBOT STATE--------------");
         telemetry.addData("Alliance", alliance.toString());
@@ -70,7 +83,8 @@ public class RobotState {
         telemetry.addData("Vision Pose", visionPose == null ? "None" : poseToString(visionPose));
         telemetry.addData("Vector to Goal", vectorToGoal == null ? "None" : vectorToString(vectorToGoal));
         telemetry.addData("Is Kicker Safe?", kickerSafe);
-        telemetry.addData("Is Spindexer Aligned", spindexerAligned);
+        telemetry.addData("SpindexerAlignedLaunch", spindexerAlignedForLaunch);
+        telemetry.addData("SpindexerAlignedIntake", spindexerAlignedForIntake);
 
     }
 }

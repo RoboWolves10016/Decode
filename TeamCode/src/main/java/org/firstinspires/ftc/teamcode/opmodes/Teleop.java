@@ -110,21 +110,39 @@ public class Teleop extends OpMode {
     }
 
     private void processInputs() {
-        intake.setIntake(gamepad2.left_trigger > 0.1);
+        if (gamepad2.left_trigger > 0.1)  {
+            intake.runIntake();
+            spindexer.setIntakeMode();
+        } else {
+            intake.stopIntake();
+        }
         drivetrain.setAutoAim(gamepad1.right_bumper);
-        if(gamepad2.right_bumper/*operator.wasJustPressed(GamepadKeys.Button.RIGHT_BUMPER)*/) {
+        drivetrain.setRobotCentric(gamepad1.left_trigger > 0.1);
+        if(gamepad2.right_bumper) {
             spindexer.stepClockwise();
         }
-        if(gamepad2.left_bumper/*operator.wasJustPressed(GamepadKeys.Button.LEFT_BUMPER)*/) {
+
+        if(gamepad2.left_bumper) {
             spindexer.stepCounterClockwise();
         }
 
-        if (operator.getButton(GamepadKeys.Button.A)) launcher.setAuto();
+        if (operator.getButton(GamepadKeys.Button.A)) {
+            launcher.setAuto();
+            spindexer.setLaunchMode();
+        }
 
-        if (operator.getButton(GamepadKeys.Button.B)) launcher.setIdle();
-        if (operator.getButton(GamepadKeys.Button.X)) launcher.setPreset();
+        if (operator.getButton(GamepadKeys.Button.B)) {
+            launcher.setIdle();
+            spindexer.setLaunchMode();
+        }
+        if (operator.getButton(GamepadKeys.Button.X)) {
+            launcher.setPreset();
+            spindexer.setLaunchMode();
+        }
 
-        if (operator.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.1) kicker.feed();
+        if (operator.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.1) {
+            kicker.feed();
+        } else kicker.stopFeed();
     }
 
     @Override

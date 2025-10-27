@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import android.graphics.Color;
+
 import com.bylazar.configurables.PanelsConfigurables;
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.telemetry.PanelsTelemetry;
@@ -8,12 +10,23 @@ import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.ServoController;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.controller.PIDFController;
 import com.seattlesolvers.solverslib.hardware.AbsoluteAnalogEncoder;
+import com.seattlesolvers.solverslib.hardware.ServoEx;
 import com.seattlesolvers.solverslib.hardware.motors.CRServoEx;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.RobotState;
+import org.firstinspires.ftc.teamcode.Tuning;
+import org.firstinspires.ftc.teamcode.util.SpindexerSlot;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+
+import lombok.var;
 
 @Configurable
 public class Spindexer extends Subsystem {
@@ -21,23 +34,20 @@ public class Spindexer extends Subsystem {
     private HardwareMap hwMap;
     private final TelemetryManager telemetry;
     private final RobotState robotState;
-    private CRServoEx servo;
+    private ServoEx servo;
+    private ColorSensors colorSensors;
     private AbsoluteAnalogEncoder encoder;
-    private final PIDFController positionController = new PIDFController(new PIDFCoefficients(kP, kI, kD, 0));
-    public static double setpointDegrees = 0;
-    private int selectedSlot = 0;
-    private static final double ENCODER_OFFSET = -79;
+    private double setpoint = 0;
+    private SpindexerSlot currentSlot = SpindexerSlot.ONE;
+    private final ElapsedTime stepTimer = new ElapsedTime();
+
+    private final Map<SpindexerSlot, ColorSensors.BallState> map = new HashMap<>();
     private enum SpindexerState {
         INTAKE,
-        LAUNCH;
+        LAUNCH
     }
 
     private SpindexerState state = SpindexerState.LAUNCH;
-
-
-    public static double kP = 0;
-    public static double kI = 0;
-    public static double kD = 0;
 
     private double currentPosition;
 
@@ -45,47 +55,72 @@ public class Spindexer extends Subsystem {
         this.telemetry = PanelsTelemetry.INSTANCE.getTelemetry();
         this.hwMap = hwMap;
         this.robotState = RobotState.getInstance();
+        this.colorSensors = new ColorSensors(hwMap);
+        map.put(SpindexerSlot.ONE, ColorSensors.BallState.EMPTY);
+        map.put(SpindexerSlot.TWO, ColorSensors.BallState.EMPTY);
+        map.put(SpindexerSlot.THREE, ColorSensors.BallState.EMPTY);
     }
 
     @Override
     public void init() {
         encoder = new AbsoluteAnalogEncoder(hwMap, "Analog", 3.3, AngleUnit.DEGREES);
         encoder.setReversed(false);
-        servo = new CRServoEx(
+        servo = new ServoEx(
                 hwMap,
-                "Spindexer",
-                encoder,
-                CRServoEx.RunMode.RawPower);
+                "Spindexer");
+        colorSensors.init();
 
         servo.getServo().getController().pwmEnable();
-        positionController.setPIDF(kP, kI, kD, 0);
     }
 
     @Override
     public void run() {
-        selectedSlot = selectedSlot % 3;
+        colorSensors.run();
+        currentPosition = encoder.getCurrentPosition();
+        robotState.setCurrentSlot(currentSlot);
+        robotState.setCurrentSlotBallState(map.get(currentSlot));
+        if (state == SpindexerState.LAUNCH) {
+            // LAUNCH STATE CODE
+            setpoint = currentSlot.launchPosition;
+//            setSlotData(robotState.getCurrentSlot(), robotState.getCurrentSlotBallState());
+        } else {
+            // INTAKE STATE CODE
+            setpoint = currentSlot.intakePosition;
 
-        currentPosition = encoder.getCurrentPosition() % 360;
-        positionController.setPIDF(kP, kI, kD, 0);
+//            if (robotState.isSpindexerAlignedForIntake()
+//                    && colorSensors.getCurrentStateDuration() > 0.12)
+//            {
+//                setSlotData(currentSlot, colorSensors.getCurrentBallState());
+//                if (colorSensors.getCurrentBallState() != ColorSensors.BallState.EMPTY && !isFull()) {
+//                    stepClockwise();
+//                }
+//            }
+        }
+        servo.set(setpoint);
 
-//        setpointDegrees = + 120 * selectedSlot;
+        // Update Robot State safety variables
+        robotState.setSpindexerAlignedForLaunch(
+                Math.abs(currentPosition  - currentSlot.launchMeasurement)
+                        < Tuning.SPINDEXER_ALIGNED_TOLERANCE_DEG);
+        robotState.setSpindexerAlignedForIntake(
+                Math.abs(currentPosition - currentSlot.intakeMeasurement)
+                        < Tuning.SPINDEXER_ALIGNED_TOLERANCE_DEG);
 
-        servo.set(positionController.calculate(currentPosition, setpointDegrees + ENCODER_OFFSET));
-//        servo.set((setpointDegrees % 360) + ENCODER_OFFSET);
         updateTelemetry();
 
-    }
-
-    public void setTarget(double setpoint) {
-        setpointDegrees = setpoint;
     }
 
     @Override
     protected void updateTelemetry(){
         telemetry.addLine("--------------SPINDEXER--------------");
-        telemetry.addData("Current Position", currentPosition - ENCODER_OFFSET);
-        telemetry.addData("Setpoint Degrees", setpointDegrees);
-        telemetry.addData("Selected Slot", selectedSlot);
+        telemetry.addData("Current Position", currentPosition);
+        telemetry.addData("Servo Setpoint", setpoint);
+        telemetry.addData("Selected Slot", currentSlot);
+        telemetry.addData("State", state);
+        telemetry.addData("Slot 1 State", Objects.requireNonNull(map.get(SpindexerSlot.ONE)));
+        telemetry.addData("Slot 2 State", Objects.requireNonNull(map.get(SpindexerSlot.TWO)));
+        telemetry.addData("Slot 3 State", Objects.requireNonNull(map.get(SpindexerSlot.THREE)));
+        colorSensors.updateTelemetry();
     }
 
     @Override
@@ -93,12 +128,33 @@ public class Spindexer extends Subsystem {
 
     }
 
+    public void setLaunchMode() {
+        state = SpindexerState.LAUNCH;
+    }
+
+    public void setIntakeMode() {
+        state = SpindexerState.INTAKE;
+    }
+
     public void stepClockwise() {
-        selectedSlot = selectedSlot + 1;
+        if (stepTimer.seconds() > 0.5) {
+            currentSlot = currentSlot.last();
+            stepTimer.reset();
+        }
     }
 
     public void stepCounterClockwise() {
-        selectedSlot = selectedSlot - 1;
+        if (stepTimer.seconds() > 0.5) {
+            currentSlot = currentSlot.next();
+            stepTimer.reset();
+        }
     }
 
+    private boolean isFull() {
+        return !map.containsValue(ColorSensors.BallState.EMPTY);
+    }
+
+    public void setSlotData(SpindexerSlot slot, ColorSensors.BallState ballState) {
+        map.put(slot, ballState);
+    }
 }

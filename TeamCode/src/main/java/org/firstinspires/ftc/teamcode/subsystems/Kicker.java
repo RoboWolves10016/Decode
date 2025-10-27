@@ -25,7 +25,6 @@ public class Kicker extends Subsystem{
     public static final double SAFE_THRESHOLD = 165;
 
     public static final double TOP_THRESHOLD = 175;
-    private final ElapsedTime timer = new ElapsedTime();
 
     private enum KickerState {
         IDLE,
@@ -74,15 +73,14 @@ public class Kicker extends Subsystem{
 
     private void runIdle() {
         setpoint = DOWN_POSITION;
-        if (feedBall /*&& robotState.isSpindexerAligned()*/) {
+        if (feedBall && robotState.isSpindexerAlignedForLaunch()) {
             currentState = KickerState.ACTIVE;
         }
     }
 
     private void runActive() {
-//        if (lastState == KickerState.IDLE) timer.reset();
         // Hardware output logic
-        if (true /*robotState.isSpindexerAligned()*/) {
+        if (robotState.isSpindexerAlignedForLaunch()) {
             setpoint = UP_POSITION;
         } else {
             setpoint = DOWN_POSITION;
@@ -90,8 +88,8 @@ public class Kicker extends Subsystem{
 
         // State transition logic
         if (position > TOP_THRESHOLD) {
-//        if (timer.seconds() > 0.15) {
             currentState = KickerState.IDLE;
+            robotState.setCurrentSlotBallState(ColorSensors.BallState.EMPTY);
             feedBall = false;
         }
     }
@@ -101,9 +99,9 @@ public class Kicker extends Subsystem{
     protected void updateTelemetry() {
         telemetry.addLine("--------------KICKER--------------");
         telemetry.addData("Position", position);
+        telemetry.addData("Servo Setpoint", setpoint);
         telemetry.addData("Current State", currentState);
         telemetry.addData("Want Feed", feedBall);
-        telemetry.addData("Timer", timer.seconds());
     }
 
     @Override
@@ -113,5 +111,9 @@ public class Kicker extends Subsystem{
 
     public void feed() {
         feedBall = true;
+    }
+
+    public void stopFeed() {
+        feedBall = false;
     }
 }
