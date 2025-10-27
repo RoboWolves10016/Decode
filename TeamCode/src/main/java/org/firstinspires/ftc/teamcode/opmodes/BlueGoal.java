@@ -34,11 +34,15 @@ public class BlueGoal extends OpMode {
     @Override
     public void init() {
         drivetrain = new Drive(hardwareMap,new GamepadEx(gamepad1));
+        drivetrain.init();
         follower = drivetrain.getFollower();
 
         launcher = new Launcher(hardwareMap);
+        launcher.init();
         spindexer = new Spindexer(hardwareMap);
+        spindexer.init();
         kicker = new Kicker(hardwareMap);
+        kicker.init();
 
         robotState.setAlliance(Alliance.BLUE);
         follower.setStartingPose(new Pose(26, 130, Math.toRadians(144)));
