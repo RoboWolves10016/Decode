@@ -17,7 +17,7 @@ import org.firstinspires.ftc.teamcode.subsystems.Spindexer;
 import org.firstinspires.ftc.teamcode.util.Alliance;
 import org.firstinspires.ftc.teamcode.util.SpindexerSlot;
 
-@Autonomous(name = "Blue Goal")
+@Autonomous(name = "Red Goal")
 public class RedGoal extends OpMode {
     private final RobotState robotState = RobotState.getInstance();
     private Drive drivetrain;
@@ -36,6 +36,7 @@ public class RedGoal extends OpMode {
         drivetrain = new Drive(hardwareMap,new GamepadEx(gamepad1));
         drivetrain.init();
         follower = drivetrain.getFollower();
+        follower.setStartingPose(new Pose(144-26, 130, Math.toRadians(36)));
 
         launcher = new Launcher(hardwareMap);
         launcher.init();
@@ -44,8 +45,7 @@ public class RedGoal extends OpMode {
         kicker = new Kicker(hardwareMap);
         kicker.init();
 
-        robotState.setAlliance(Alliance.BLUE);
-        follower.setStartingPose(new Pose(144-26, 130, Math.toRadians(36)));
+        robotState.setAlliance(Alliance.RED);
         pathChain = createPathChain(follower);
     }
 
