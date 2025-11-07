@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.teamcode.util.BallState;
 
 public class ColorSensors extends Subsystem {
 
@@ -16,8 +17,10 @@ public class ColorSensors extends Subsystem {
     private ColorRangeSensor left;
     private ColorRangeSensor right;
     private boolean isValid = false;
+
     private BallState leftState = BallState.EMPTY;
     private BallState rightState = BallState.EMPTY;
+
     private int lRed = 0;
     private int lGreen = 0;
     private int lBlue = 0;
@@ -108,9 +111,4 @@ public class ColorSensors extends Subsystem {
         return timer.seconds();
     }
 
-    public enum BallState {
-        EMPTY,
-        GREEN,
-        PURPLE
-    }
 }

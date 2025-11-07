@@ -118,6 +118,7 @@ public class Teleop extends OpMode {
         }
         drivetrain.setAutoAim(gamepad1.right_bumper);
         drivetrain.setRobotCentric(gamepad1.left_trigger > 0.1);
+
         if(gamepad2.right_bumper) {
             spindexer.stepClockwise();
         }

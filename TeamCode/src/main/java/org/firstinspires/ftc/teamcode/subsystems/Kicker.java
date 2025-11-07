@@ -89,7 +89,6 @@ public class Kicker extends Subsystem{
         // State transition logic
         if (position > TOP_THRESHOLD) {
             currentState = KickerState.IDLE;
-            robotState.setCurrentSlotBallState(ColorSensors.BallState.EMPTY);
             feedBall = false;
         }
     }

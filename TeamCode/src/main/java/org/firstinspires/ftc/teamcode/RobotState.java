@@ -71,8 +71,6 @@ public class RobotState {
 
     @Setter
     SpindexerSlot currentSlot = SpindexerSlot.ONE;
-    @Setter
-    private ColorSensors.BallState currentSlotBallState = ColorSensors.BallState.EMPTY;
 
     public void addTelemetry(TelemetryManager telemetry) {
         telemetry.addLine("--------------ROBOT STATE--------------");
