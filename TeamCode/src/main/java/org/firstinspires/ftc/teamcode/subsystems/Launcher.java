@@ -79,13 +79,14 @@ public class Launcher extends Subsystem {
                 break;
         }
 
-
         currentRpm = (motor.getCorrectedVelocity() / 28) * 60;
 
-        velocityController.setPIDF(kP, kI, kD, 0);
-        feedforward = new SimpleMotorFeedforward(kS, kV, kA);
+//        velocityController.setPIDF(kP, kI, kD, 0);
+//        feedforward = new SimpleMotorFeedforward(kS, kV, kA);
 
         motor.set(Math.max(0,velocityController.calculate(currentRpm, targetRpm) + feedforward.calculate(targetRpm, motor.getAcceleration())));
+
+        robotState.setRpmReady(Math.abs(currentRpm - targetRpm) < 50);
         updateTelemetry();
     }
 

@@ -15,7 +15,14 @@ public class Intake extends Subsystem {
     private MotorEx motor;
     private final HardwareMap hwMap;
 
-    private boolean active = false;
+    private enum IntakeState {
+        IDLE,
+        WAIT,
+        INTAKE,
+        FULL
+    }
+
+    private IntakeState currentState = IntakeState.IDLE;
 
     public Intake(HardwareMap ThisIsASentence) {
         this.hwMap = ThisIsASentence;
@@ -29,22 +36,33 @@ public class Intake extends Subsystem {
         motor.setInverted(true);
         motor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
         motor.setRunMode(Motor.RunMode.RawPower);
+        motor.setCachingTolerance(0.01);
     }
 
     @Override
     public void run() {
-        if (active){
-            motor.set(1);
-        }else {
-            motor.set(0.0);
+        switch(currentState) {
+            case IDLE:
+                motor.set(0);
+                break;
+            case INTAKE:
+                motor.set(1);
+                break;
+            case WAIT:
+                motor.set(0.3);
+                break;
+            case FULL:
+                motor.set(-0.3);
+                break;
         }
+
         updateTelemetry();
     }
 
     @Override
     public void updateTelemetry() {
         telemetry.addLine("--------------INTAKE--------------");
-        telemetry.addData("Active", active);
+        telemetry.addData("State", currentState);
     }
 
     @Override
@@ -53,11 +71,20 @@ public class Intake extends Subsystem {
     }
 
     public void runIntake() {
+
+        if (robotState.isFull()) {
+            currentState = IntakeState.FULL;
+            return;
+        }
         // Only spin intake if the spindexer is ready to receive
-        active = robotState.isSpindexerAlignedForIntake();
+        if (robotState.isSpindexerAlignedForIntake()) {
+            currentState = IntakeState.INTAKE;
+        } else {
+            currentState = IntakeState.WAIT;
+        }
     }
 
     public void stopIntake() {
-        active = false;
+        currentState = IntakeState.IDLE;
     }
 }

@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.hardware.AbsoluteAnalogEncoder;
@@ -10,6 +11,9 @@ import com.seattlesolvers.solverslib.hardware.ServoEx;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.RobotState;
+import org.firstinspires.ftc.teamcode.util.SpindexerSlot;
+
+import lombok.Getter;
 
 @Configurable
 public class Kicker extends Subsystem{
@@ -17,6 +21,7 @@ public class Kicker extends Subsystem{
     private final TelemetryManager telemetry;
     private final HardwareMap hwMap;
     private final RobotState robotState;
+
     private ServoEx servo;
     private AbsoluteAnalogEncoder encoder;
 
@@ -28,16 +33,21 @@ public class Kicker extends Subsystem{
 
     private enum KickerState {
         IDLE,
-        ACTIVE
+        KICKING,
+        RETURNING
     }
 
     // INSTANCE STATE VARIABLES
     private KickerState currentState = KickerState.IDLE;
     private KickerState lastState = KickerState.IDLE;
+    private final ElapsedTime timer = new ElapsedTime();
 
     private boolean feedBall = false;
     private double position;
     private double setpoint = DOWN_POSITION;
+
+    private SpindexerSlot lastKickedSlot = null;
+
 
     public Kicker(HardwareMap hwMap) {
         this.telemetry = PanelsTelemetry.INSTANCE.getTelemetry();
@@ -55,31 +65,41 @@ public class Kicker extends Subsystem{
     @Override
     public void run() {
         position = encoder.getCurrentPosition();
-        robotState.setKickerSafe(position < SAFE_THRESHOLD);
 
-        lastState = currentState;
+        robotState.setKickerSafe(position < SAFE_THRESHOLD && currentState == KickerState.IDLE);
 
         // State transition logic
-        if (currentState == KickerState.IDLE) {
-            runIdle();
+        switch (currentState) {
+            case IDLE:
+                runIdle();
+                break;
+            case KICKING:
+                runKicking();
+                break;
+            case RETURNING:
+                runReturning();
+                break;
         }
 
-        if (currentState == KickerState.ACTIVE) {
-            runActive();
-        }
+        robotState.setBallKicked(currentState == KickerState.RETURNING);
+
+        lastState = currentState;
         servo.set(setpoint);
         updateTelemetry();
     }
 
     private void runIdle() {
         setpoint = DOWN_POSITION;
-        if (feedBall && robotState.isSpindexerAlignedForLaunch()) {
-            currentState = KickerState.ACTIVE;
+        robotState.setKickerSafe(true);
+        if (feedBall && robotState.isSpindexerAlignedForLaunch() && lastKickedSlot != robotState.getCurrentSlot()
+        && robotState.isRpmReady()) {
+            currentState = KickerState.KICKING;
         }
     }
 
-    private void runActive() {
-        // Hardware output logic
+    private void runKicking() {
+        if (lastState == KickerState.IDLE) timer.reset();
+        robotState.setKickerSafe(false);
         if (robotState.isSpindexerAlignedForLaunch()) {
             setpoint = UP_POSITION;
         } else {
@@ -87,10 +107,16 @@ public class Kicker extends Subsystem{
         }
 
         // State transition logic
-        if (position > TOP_THRESHOLD) {
-            currentState = KickerState.IDLE;
-            feedBall = false;
+        if (position > TOP_THRESHOLD || timer.seconds() > 0.5) {
+            currentState = KickerState.RETURNING;
+            lastKickedSlot = robotState.getCurrentSlot();
         }
+    }
+
+    private void runReturning() {
+        robotState.setKickerSafe(false);
+        setpoint = DOWN_POSITION;
+        if (position < SAFE_THRESHOLD) currentState = KickerState.IDLE;
     }
 
 
@@ -114,5 +140,9 @@ public class Kicker extends Subsystem{
 
     public void stopFeed() {
         feedBall = false;
+    }
+
+    public void resetHistory() {
+        lastKickedSlot = null;
     }
 }

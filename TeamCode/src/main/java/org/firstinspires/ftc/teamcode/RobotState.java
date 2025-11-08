@@ -72,6 +72,15 @@ public class RobotState {
     @Setter
     SpindexerSlot currentSlot = SpindexerSlot.ONE;
 
+    @Getter @Setter
+    private boolean ballKicked = false;
+
+    @Getter @Setter
+    private boolean rpmReady = false;
+
+    @Getter @Setter
+    private boolean isFull = false;
+
     public void addTelemetry(TelemetryManager telemetry) {
         telemetry.addLine("--------------ROBOT STATE--------------");
         telemetry.addData("Alliance", alliance.toString());

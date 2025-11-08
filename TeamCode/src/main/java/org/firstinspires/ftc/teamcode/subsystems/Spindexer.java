@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.hardware.AbsoluteAnalogEncoder;
@@ -12,6 +13,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.RobotState;
 import org.firstinspires.ftc.teamcode.Tuning;
 import org.firstinspires.ftc.teamcode.util.BallState;
+import org.firstinspires.ftc.teamcode.util.Debouncer;
 import org.firstinspires.ftc.teamcode.util.Pattern;
 import org.firstinspires.ftc.teamcode.util.SpindexerSlot;
 
@@ -21,43 +23,31 @@ import lombok.Setter;
 public class Spindexer extends Subsystem {
 
     // Usual subsystem variables
-    private HardwareMap hwMap;
     private final TelemetryManager telemetry;
     private final RobotState robotState;
+    // For manual override
+    private final ElapsedTime stepTimer = new ElapsedTime();
+    private final HardwareMap hwMap;
 
     // Hardware variables
     private ServoEx servo;
-    private ColorSensors colorSensors;
+    private final ColorSensors colorSensors;
     private AbsoluteAnalogEncoder encoder;
 
+//    private DigitalChannel beamBreak;
     // Current status of the subsystem
     private double setpoint = 0;
     private SpindexerSlot currentSlot = SpindexerSlot.ONE;
     private BallState slot1State = BallState.EMPTY;
     private BallState slot2State = BallState.EMPTY;
     private BallState slot3State = BallState.EMPTY;
-
-    // For manual override
-    private final ElapsedTime stepTimer = new ElapsedTime();
-
-    private enum SpindexerState {
-        INTAKE,
-        LAUNCH
-    }
-
-    private enum FeedType {
-        PEWPEWPEW,
-        GREEN,
-        PURPLE,
-        PATTERN
-    }
-
+    private BallState lastBallState = BallState.EMPTY;
     private SpindexerState state = SpindexerState.LAUNCH;
+    private boolean ballKicked = false;
+    private boolean lastBallKicked = false;
     @Setter
     private FeedType feedType = FeedType.PEWPEWPEW;
-
     private int patternIndex = 1;   // This variable tracks which ball (1-3) of the pattern we want to shoot next
-
     private double currentPosition;
 
     public Spindexer(HardwareMap hwMap) {
@@ -74,6 +64,7 @@ public class Spindexer extends Subsystem {
         servo = new ServoEx(
                 hwMap,
                 "Spindexer");
+//        beamBreak = hwMap.get(DigitalChannel.class, "LauncherSensor");
         colorSensors.init();
 
         servo.getServo().getController().pwmEnable();
@@ -81,28 +72,28 @@ public class Spindexer extends Subsystem {
 
     @Override
     public void run() {
+        // Update Robot State variables
+        robotState.setCurrentSlot(currentSlot);
         // Run color sensors before logic that checks them
         colorSensors.run();
         // Based on the state, determine which spindexer slot is desired and go to it
+        ballKicked = robotState.isBallKicked();
+
         switch (state) {
             case INTAKE:
                 runIntake();
+                robotState.setSpindexerAlignedForLaunch(false);
                 break;
             case LAUNCH:
                 runLaunch();
+                robotState.setSpindexerAlignedForIntake(false);
                 break;
         }
-        currentPosition = encoder.getCurrentPosition();
-        servo.set(setpoint);
 
-        // Update Robot State variables
-        robotState.setCurrentSlot(currentSlot);
-        robotState.setSpindexerAlignedForLaunch(
-                Math.abs(currentPosition - currentSlot.launchMeasurement)
-                        < Tuning.SPINDEXER_ALIGNED_TOLERANCE_DEG);
-        robotState.setSpindexerAlignedForIntake(
-                Math.abs(currentPosition - currentSlot.intakeMeasurement)
-                        < Tuning.SPINDEXER_ALIGNED_TOLERANCE_DEG);
+        currentPosition = encoder.getCurrentPosition();
+        robotState.setFull(isFull());
+        lastBallKicked = ballKicked;
+        servo.set(setpoint);
 
         updateTelemetry();
     }
@@ -112,17 +103,30 @@ public class Spindexer extends Subsystem {
         currentSlot = getNextIntakeSlot();
         setpoint = currentSlot.intakePosition;
 
-        if (robotState.isSpindexerAlignedForIntake()
-                && colorSensors.getCurrentStateDuration() > 0.12) {
+        robotState.setSpindexerAlignedForIntake(
+                Math.abs(currentPosition - currentSlot.intakeMeasurement)
+                        < Tuning.SPINDEXER_ALIGNED_TOLERANCE_DEG);
+
+        if (robotState.isSpindexerAlignedForIntake()) {
             setSlotData(currentSlot, colorSensors.getCurrentBallState());
         }
-
     }
 
     // LAUNCH STATE CODE
     private void runLaunch() {
-        currentSlot = getNextLaunchSlot();
+
+        if (robotState.isKickerSafe()) {
+            currentSlot = getNextLaunchSlot();
+        }
+
         setpoint = currentSlot.launchPosition;
+
+        if (robotState.isSpindexerAlignedForLaunch() && !lastBallKicked && ballKicked) {
+            setSlotData(currentSlot, BallState.EMPTY);
+        }
+        robotState.setSpindexerAlignedForLaunch(
+                Math.abs(currentPosition - currentSlot.launchMeasurement)
+                        < Tuning.SPINDEXER_ALIGNED_TOLERANCE_DEG);
     }
 
     @Override
@@ -175,7 +179,7 @@ public class Spindexer extends Subsystem {
             return SpindexerSlot.THREE;
         }
 
-        return SpindexerSlot.ONE;
+        return currentSlot;
     }
 
     /*** ALL OF THE FOLLOWING CODE is for determining which slot to use for launching. It considers primarily the feedType. ***/
@@ -248,5 +252,29 @@ public class Spindexer extends Subsystem {
                 slot3State = ballState;
                 break;
         }
+    }
+
+    public void resetBallStates() {
+        slot1State = BallState.EMPTY;
+        slot2State = BallState.EMPTY;
+        slot3State = BallState.EMPTY;
+    }
+
+    public boolean isFull() {
+        return slot1State != BallState.EMPTY
+                && slot2State != BallState.EMPTY
+                && slot3State != BallState.EMPTY;
+    }
+
+    private enum SpindexerState {
+        INTAKE,
+        LAUNCH
+    }
+
+    private enum FeedType {
+        PEWPEWPEW,
+        GREEN,
+        PURPLE,
+        PATTERN
     }
 }

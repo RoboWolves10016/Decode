@@ -113,9 +113,11 @@ public class Teleop extends OpMode {
         if (gamepad2.left_trigger > 0.1)  {
             intake.runIntake();
             spindexer.setIntakeMode();
+            kicker.resetHistory();
         } else {
             intake.stopIntake();
         }
+
         drivetrain.setAutoAim(gamepad1.right_bumper);
         drivetrain.setRobotCentric(gamepad1.left_trigger > 0.1);
 
@@ -125,6 +127,10 @@ public class Teleop extends OpMode {
 
         if(gamepad2.left_bumper) {
             spindexer.stepCounterClockwise();
+        }
+
+        if(gamepad2.back) {
+            spindexer.resetBallStates();
         }
 
         if (operator.getButton(GamepadKeys.Button.A)) {
