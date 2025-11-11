@@ -8,21 +8,13 @@ import com.pedropathing.geometry.Pose;
 
 public enum Alliance {
     RED(
-            -Math.PI/2,
-            new Pose(
-                    144 - 14,
-                    144 - 13,
-                    0,
-                    PedroCoordinates.INSTANCE
-            )),
+            0,
+            new Pose(144 - 10, 144 - 9)
+    ),
     BLUE(
-            Math.PI / 2,
-            new Pose(
-                    14,
-                    144 - 13,
-                    0,
-                    PedroCoordinates.INSTANCE
-            ));
+            Math.PI,
+            new Pose(10, 144 - 9)
+    );
 
     public final double driverForwardHeading;
     public final Pose goalPose;

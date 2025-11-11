@@ -1,15 +1,15 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
-import androidx.core.math.MathUtils;
-
+import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
-import com.pedropathing.math.Vector;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.seattlesolvers.solverslib.controller.PIDController;
+import com.seattlesolvers.solverslib.controller.wpilibcontroller.ProfiledPIDController;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
+import com.seattlesolvers.solverslib.trajectory.TrapezoidProfile;
 
 import org.firstinspires.ftc.teamcode.Constants;
 import org.firstinspires.ftc.teamcode.RobotState;
@@ -18,6 +18,7 @@ import org.firstinspires.ftc.teamcode.util.PoseUtils;
 import lombok.Getter;
 import lombok.Setter;
 
+@Configurable
 public class Drive extends Subsystem{
     private final TelemetryManager telemetry;
 
@@ -39,7 +40,19 @@ public class Drive extends Subsystem{
     private double turnCommand = 0;
     private double headingToGoal = 0;
 
-    private final PIDController rotationController = new PIDController(2,0,0.1);
+    public static double aimP = 1;
+    public static double aimI = 0;
+    public static double aimD = 0.1;
+
+    ProfiledPIDController autoAimController = new ProfiledPIDController(
+            aimP,
+            aimI,
+            aimD,
+            new TrapezoidProfile.Constraints(0.5, 2));
+
+    public double speedMultiplier = 1.0;
+
+//    private final PIDController rotationController = new PIDController(aimP,aimI,aimD);
 
     public Drive(HardwareMap hwMap, GamepadEx driver) {
         this.telemetry = PanelsTelemetry.INSTANCE.getTelemetry();
@@ -50,32 +63,33 @@ public class Drive extends Subsystem{
 
     @Override
     public void init() {
-        follower.setStartingPose(
-                robotState.getPose() == null ? new Pose() : robotState.getPose()
-        );
+        follower.setPose(robotState.getPose());
     }
 
     @Override
     public void run() {
 
-        forwardCommand = driver.getLeftY();
-        strafeCommand = -driver.getLeftX();
+//        rotationController.setPID(aimP, aimI, aimD);
+        autoAimController.setPID(aimP, aimI, aimD);
+
+        forwardCommand = driver.getLeftY();// * speedMultiplier;
+        strafeCommand = -driver.getLeftX();// * speedMultiplier;
         headingToGoal = PoseUtils.normalizeHeading(robotState.getVectorToGoal().getTheta());
 
         robotState.setNotMoving(
-                follower.getVelocity().getMagnitude() < 1
-                        && follower.getHeadingVector().getMagnitude() < 1);
+                follower.getAngularVelocity() < 1
+                        && follower.getTeleopDriveVector().getMagnitude() < 1);
+
         // Accept vision pose if it is valid
         Pose visionPose = robotState.getVisionPose();
-        if (visionPose != null) {
+        if (visionPose != null && robotState.isLimelightEnabled() &&/* robotState.isNotMoving() &&*/ !autoAim) {
             follower.setPose(visionPose);
-            robotState.setPose(visionPose);
-        } else {
-            robotState.setPose(follower.getPose());
         }
 
+        robotState.setPose(follower.getPose());
+
         if (teleop) {
-            turnCommand = -driver.getRightX();
+            turnCommand = -driver.getRightX() * 0.5;
             if (autoAim) {
                 double heading = PoseUtils.normalizeHeading(follower.getHeading());
                 double targetHeading = headingToGoal;
@@ -85,12 +99,15 @@ public class Drive extends Subsystem{
                 if (targetHeading - heading > Math.PI) {
                     heading += 2 * Math.PI;
                 }
-                turnCommand = rotationController.calculate(
-                        heading,
-                        targetHeading
-                );
+                turnCommand = autoAimController.calculate(heading, targetHeading);
+//                turnCommand = rotationController.calculate(
+//                        heading,
+//                        targetHeading);
+                if (turnCommand > 0.5) turnCommand = 0.5;
+                if (turnCommand < -0.5) turnCommand = -0.5;
             }
 
+//            turnCommand *= speedMultiplier;
             follower.setTeleOpDrive(
                     forwardCommand,
                     strafeCommand,
@@ -123,7 +140,11 @@ public class Drive extends Subsystem{
         follower.startTeleopDrive();
     }
 
-    public void setPose(Pose newPose) {
-        follower.setPose(newPose);
+    public void startAuton() {
+        teleop = false;
+    }
+
+    public void setSpeed(double pct) {
+        speedMultiplier = pct;
     }
 }

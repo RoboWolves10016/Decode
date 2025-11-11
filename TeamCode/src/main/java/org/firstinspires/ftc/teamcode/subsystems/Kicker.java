@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.hardware.AbsoluteAnalogEncoder;
@@ -12,8 +11,6 @@ import com.seattlesolvers.solverslib.hardware.ServoEx;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.RobotState;
 import org.firstinspires.ftc.teamcode.util.SpindexerSlot;
-
-import lombok.Getter;
 
 @Configurable
 public class Kicker extends Subsystem{
@@ -92,7 +89,7 @@ public class Kicker extends Subsystem{
         setpoint = DOWN_POSITION;
         robotState.setKickerSafe(true);
         if (feedBall && robotState.isSpindexerAlignedForLaunch() && lastKickedSlot != robotState.getCurrentSlot()
-        && robotState.isRpmReady()) {
+        && robotState.isLauncherReady()) {
             currentState = KickerState.KICKING;
         }
     }
@@ -115,6 +112,7 @@ public class Kicker extends Subsystem{
 
     private void runReturning() {
         robotState.setKickerSafe(false);
+        stopFeed();
         setpoint = DOWN_POSITION;
         if (position < SAFE_THRESHOLD) currentState = KickerState.IDLE;
     }

@@ -74,8 +74,8 @@ public class SensorLimelight3A extends LinearOpMode {
 
     private Limelight3A limelight;
 
-    private static final Double[] transform_20 = {0.5877852522924731, -0.8090169943749475, 0d, -1.482, 0.8090169943749475, 0.5877852522924731, 0d, -1.413, 0d, 0d, 1d, 0.749, 0d, 0d, 0d, 1d};
-    private static final Double[] transform_24 = {0.5877852522924731,0.8090169943749475,0d,-1.482,-0.8090169943749475,0.5877852522924731,0d,1.413,0d,0d,1d,0.749,0d,0d,0d,1d};
+    private static final Double[] transform_20 = {0.5877852522924731,-0.8090169943749473,0d,-1.4827,0.8090169943749473,0.5877852522924731,0d,-1.4133,0d,0d,1d,0.7493,0d,0d,0d,1d};
+    private static final Double[] transform_24 = {0.5877852522924731,0.8090169943749473,0d,-1.4827,-0.8090169943749473,0.5877852522924731,0d,1.4133,0d,0d,1d,0.7493,0d,0d,0d,1d};
     private static final LLFieldMap map = new LLFieldMap(
             new ArrayList<>(Arrays.asList(
                     new LLFieldMap.Fiducial(

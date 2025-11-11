@@ -35,7 +35,6 @@ public class Teleop extends OpMode {
 
     // These two static variables will be set in the stop() method of any auton OpMode ran before this.
     private final TelemetryManager telemetryManager = PanelsTelemetry.INSTANCE.getTelemetry();
-    public boolean autoAimEnabled = false;
     private Drive drivetrain;
     private Limelight limelight;
     private Spindexer spindexer;
@@ -96,6 +95,7 @@ public class Teleop extends OpMode {
 
         // Update telemetry to panels and Driver Station
         telemetryManager.update(telemetry);
+        RobotState.getInstance().setLimelightEnabled(true);
     }
 
     @Override
@@ -112,14 +112,15 @@ public class Teleop extends OpMode {
     private void processInputs() {
         if (gamepad2.left_trigger > 0.1)  {
             intake.runIntake();
-            spindexer.setIntakeMode();
             kicker.resetHistory();
+            spindexer.setIntakeMode();
         } else {
             intake.stopIntake();
         }
 
-        drivetrain.setAutoAim(gamepad1.right_bumper);
+        drivetrain.setAutoAim(gamepad1.left_bumper);
         drivetrain.setRobotCentric(gamepad1.left_trigger > 0.1);
+        drivetrain.setSpeed(gamepad1.right_trigger > 0.1 ? 0.35 : 1.0);
 
         if(gamepad2.right_bumper) {
             spindexer.stepClockwise();
@@ -133,23 +134,42 @@ public class Teleop extends OpMode {
             spindexer.resetBallStates();
         }
 
-        if (operator.getButton(GamepadKeys.Button.A)) {
-            launcher.setAuto();
-            spindexer.setLaunchMode();
+        if(gamepad1.back) {
+            RobotState.getInstance().setHeadingInitialized(false);
         }
+
+        if (operator.getButton(GamepadKeys.Button.Y)) {
+            launcher.setAuto();
+        } else if (spindexer.isEmpty()) {
+            launcher.setIdle();
+        }
+
 
         if (operator.getButton(GamepadKeys.Button.B)) {
             launcher.setIdle();
-            spindexer.setLaunchMode();
         }
-        if (operator.getButton(GamepadKeys.Button.X)) {
-            launcher.setPreset();
+//        if (operator.getButton(GamepadKeys.Button.X)) {
+//            launcher.setPreset();
+//        }
+
+        if (gamepad2.right_trigger > 0.1) {
+            spindexer.setFeedType(Spindexer.FeedType.PEWPEWPEW);
             spindexer.setLaunchMode();
+            kicker.feed();
         }
 
-        if (operator.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.1) {
+        if (gamepad2.a && spindexer.hasGreen()) {
+            spindexer.setFeedType(Spindexer.FeedType.GREEN);
+            spindexer.setLaunchMode();
             kicker.feed();
-        } else kicker.stopFeed();
+        }
+
+        if (gamepad2.x && spindexer.hasPurple()) {
+            spindexer.setFeedType(Spindexer.FeedType.PURPLE);
+            spindexer.setLaunchMode();
+            kicker.feed();
+        }
+
     }
 
     @Override

@@ -45,6 +45,7 @@ public class Spindexer extends Subsystem {
     private SpindexerState state = SpindexerState.LAUNCH;
     private boolean ballKicked = false;
     private boolean lastBallKicked = false;
+
     @Setter
     private FeedType feedType = FeedType.PEWPEWPEW;
     private int patternIndex = 1;   // This variable tracks which ball (1-3) of the pattern we want to shoot next
@@ -72,8 +73,7 @@ public class Spindexer extends Subsystem {
 
     @Override
     public void run() {
-        // Update Robot State variables
-        robotState.setCurrentSlot(currentSlot);
+        currentPosition = encoder.getCurrentPosition();
         // Run color sensors before logic that checks them
         colorSensors.run();
         // Based on the state, determine which spindexer slot is desired and go to it
@@ -90,10 +90,11 @@ public class Spindexer extends Subsystem {
                 break;
         }
 
-        currentPosition = encoder.getCurrentPosition();
-        robotState.setFull(isFull());
         lastBallKicked = ballKicked;
         servo.set(setpoint);
+        // Update Robot State variables
+        robotState.setCurrentSlot(currentSlot);
+        robotState.setFull(isFull());
 
         updateTelemetry();
     }
@@ -115,11 +116,10 @@ public class Spindexer extends Subsystem {
     // LAUNCH STATE CODE
     private void runLaunch() {
 
+        currentSlot = getNextLaunchSlot();
         if (robotState.isKickerSafe()) {
-            currentSlot = getNextLaunchSlot();
+            setpoint = currentSlot.launchPosition;
         }
-
-        setpoint = currentSlot.launchPosition;
 
         if (robotState.isSpindexerAlignedForLaunch() && !lastBallKicked && ballKicked) {
             setSlotData(currentSlot, BallState.EMPTY);
@@ -132,10 +132,11 @@ public class Spindexer extends Subsystem {
     @Override
     protected void updateTelemetry() {
         telemetry.addLine("--------------SPINDEXER--------------");
+        telemetry.addData("State", state);
+        telemetry.addData("Feed Type", feedType);
         telemetry.addData("Current Position", currentPosition);
         telemetry.addData("Servo Setpoint", setpoint);
         telemetry.addData("Selected Slot", currentSlot);
-        telemetry.addData("State", state);
         telemetry.addData("Slot 1 State", slot1State);
         telemetry.addData("Slot 2 State", slot2State);
         telemetry.addData("Slot 3 State", slot3State);
@@ -195,12 +196,13 @@ public class Spindexer extends Subsystem {
                 return getNextPatternSlot();
             case PEWPEWPEW:
                 // Just return the first loaded slot
+                if (getSlotData(currentSlot) != BallState.EMPTY) return currentSlot;
                 if (slot1State != BallState.EMPTY) {
                     return SpindexerSlot.ONE;
-                } else if (slot2State != BallState.EMPTY) {
-                    return SpindexerSlot.TWO;
                 } else if (slot3State != BallState.EMPTY) {
                     return SpindexerSlot.THREE;
+                } else if (slot2State != BallState.EMPTY) {
+                    return SpindexerSlot.TWO;
                 }
         }
         // If nothing is loaded, just return the current slot
@@ -240,6 +242,17 @@ public class Spindexer extends Subsystem {
         }
     }
 
+    public BallState getSlotData(SpindexerSlot slot) {
+        switch (slot) {
+            case ONE:
+                return slot1State;
+            case TWO:
+                return slot2State;
+            default:
+                return slot3State;
+        }
+    }
+
     public void setSlotData(SpindexerSlot slot, BallState ballState) {
         switch (slot) {
             case ONE:
@@ -266,12 +279,30 @@ public class Spindexer extends Subsystem {
                 && slot3State != BallState.EMPTY;
     }
 
+    public boolean isEmpty() {
+        return slot1State == BallState.EMPTY
+                && slot2State == BallState.EMPTY
+                && slot3State == BallState.EMPTY;
+    }
+
+    public boolean hasGreen() {
+        return slot1State == BallState.GREEN
+                || slot2State == BallState.GREEN
+                || slot3State == BallState.GREEN;
+    }
+
+    public boolean hasPurple() {
+        return slot1State == BallState.PURPLE
+                || slot2State == BallState.PURPLE
+                || slot3State == BallState.PURPLE;
+    }
+
     private enum SpindexerState {
         INTAKE,
         LAUNCH
     }
 
-    private enum FeedType {
+    public enum FeedType {
         PEWPEWPEW,
         GREEN,
         PURPLE,

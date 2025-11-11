@@ -1,12 +1,12 @@
 package org.firstinspires.ftc.teamcode.util;
 
-import com.pedropathing.ftc.InvertedFTCCoordinates;
-import com.pedropathing.geometry.PedroCoordinates;
+import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.math.Vector;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+//import org.firstinspires.ftc.teamcode.pedropathing.Tuning.Drawing;
 
 public class PoseUtils {
 
@@ -16,11 +16,23 @@ public class PoseUtils {
         Pose pose = new Pose(
                 toInches(original.getPosition().y) + 72,
                 -toInches(original.getPosition().x) + 72,
-                original.getOrientation().getYaw(AngleUnit.RADIANS),
-                PedroCoordinates.INSTANCE
+                original.getOrientation().getYaw(AngleUnit.RADIANS) + Math.PI / 2
         );
         return pose.setHeading((pose.getHeading() + Math.PI) % (2 * Math.PI));
     }
+//
+//    public static void drawOnlyCurrent(Follower follower) {
+//        try {
+//            Drawing.drawRobot(follower.getPose());
+//            Drawing.sendPacket();
+//        } catch (Exception e) {
+//            throw new RuntimeException("Drawing failed " + e);
+//        }
+//    }
+//
+//    public static void draw(Follower follower) {
+//        Drawing.drawDebug(follower);
+//    }
 
     public static boolean isInField(Pose pose) {
         return pose.getX() > 0 && pose.getX() < FIELD_WIDTH_INCHES
@@ -50,12 +62,12 @@ public class PoseUtils {
         }
     }
 
-    // Returns the given heading bounded between 0 and 2*PI
+    // Returns the given heading bounded between -PI and +PI
     public static double normalizeHeading(double heading) {
-        while (heading < 0) {
+        while (heading < -Math.PI) {
             heading += 2 * Math.PI;
         }
-        return heading % 2 * Math.PI;
+        return heading;
     }
 
     public static double toInches(double meters) {

@@ -27,7 +27,9 @@ public class Limelight extends Subsystem {
     private Limelight3A limelight;
     private Pose pose = new Pose(0,0,0);
 
-    private boolean valid;
+    private boolean valid = false;
+    private LLResult result;
+    private LLStatus status;
 
     public Limelight(HardwareMap hwMap) {
         this.hwMap = hwMap;
@@ -47,19 +49,25 @@ public class Limelight extends Subsystem {
     @Override
     public void run() {
         // Publish basic telemetry status info
-//        LLStatus status = limelight.getStatus();
+        status = limelight.getStatus();
 //        telemetry.addData("Name", String.format("%s", status.getName()));
 //        telemetry.addData("LL", String.format(Locale.US,"Temp: %.1fC, CPU: %.1f%%, FPS: %d",
 //                status.getTemp(), status.getCpu(), (int) status.getFps()));
 //        telemetry.addData("Pipeline", String.format(Locale.US, "Index: %d, Type: %s",
 //                status.getPipelineIndex(), status.getPipelineType()));
 
-        LLResult result = limelight.getLatestResult();
+        limelight.updateRobotOrientation(Math.toDegrees(robotState.getPose().getHeading()) + 90);
+
+        result = limelight.getLatestResult();
 
         // If a valid result, update variables
         if (result.isValid()) {
             if (result.getBotpose() != null) {
-                pose = PoseUtils.fromPose3d(result.getBotpose());
+                if (robotState.isHeadingInitialized()) {
+//                    pose = PoseUtils.fromPose3d(result.getBotpose_MT2());
+                } else {
+                    pose = PoseUtils.fromPose3d(result.getBotpose());
+                }
             }
 
             // Set obelisk pattern if visible
@@ -92,6 +100,8 @@ public class Limelight extends Subsystem {
         telemetry.addData("Pose", PoseUtils.poseToString(pose));
         telemetry.addData("Is Pose Valid", valid);
         telemetry.addData("Time Since Last Pose", timeSinceLastPose.seconds());
+        telemetry.addData("FPS", status.getFps());
+        telemetry.addData("PipelineType", status.getPipelineType());
     }
 
     private boolean checkValidity(LLResult result) {

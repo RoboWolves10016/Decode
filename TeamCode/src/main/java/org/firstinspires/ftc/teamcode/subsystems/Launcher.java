@@ -14,8 +14,6 @@ import com.seattlesolvers.solverslib.controller.wpilibcontroller.SimpleMotorFeed
 import com.seattlesolvers.solverslib.hardware.motors.Motor;
 import com.seattlesolvers.solverslib.hardware.motors.MotorEx;
 
-import lombok.Setter;
-
 @Configurable
 public class Launcher extends Subsystem {
 
@@ -30,6 +28,7 @@ public class Launcher extends Subsystem {
 
     private SimpleMotorFeedforward feedforward = new SimpleMotorFeedforward(0, 0, 0);
 
+    public static boolean useManualRpm = false;
     public static double targetRpm = 0;
     private double currentRpm = 0;
     private double distanceToGoal = 0;
@@ -72,7 +71,9 @@ public class Launcher extends Subsystem {
                 targetRpm = 0;
                 break;
             case AUTO:
-                targetRpm = distanceToRpm(distanceToGoal);
+                if (!useManualRpm) {
+                    targetRpm = distanceToRpm(distanceToGoal);
+                }
                 break;
             case PRESET:
                 targetRpm = 3000;
@@ -86,7 +87,7 @@ public class Launcher extends Subsystem {
 
         motor.set(Math.max(0,velocityController.calculate(currentRpm, targetRpm) + feedforward.calculate(targetRpm, motor.getAcceleration())));
 
-        robotState.setRpmReady(Math.abs(currentRpm - targetRpm) < 50);
+        robotState.setLauncherReady(Math.abs(currentRpm - targetRpm) < 50 && state != LauncherState.IDLE);
         updateTelemetry();
     }
 
@@ -106,7 +107,7 @@ public class Launcher extends Subsystem {
     }
 
     private double distanceToRpm(double distanceInches) {
-        return Interpolation.interpolate(Tuning.DISTANCED_FROM_GOAL_FEET, Tuning.REVOLUTIONS_PER_MINUTE, distanceInches / 12);
+        return Interpolation.interpolate(Tuning.DISTANCED_FROM_GOAL_INCHES, Tuning.REVOLUTIONS_PER_MINUTE, distanceInches);
     }
 
     public void setAuto() {
