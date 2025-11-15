@@ -140,6 +140,7 @@ public class Spindexer extends Subsystem {
         telemetry.addData("Slot 1 State", slot1State);
         telemetry.addData("Slot 2 State", slot2State);
         telemetry.addData("Slot 3 State", slot3State);
+        telemetry.addData("Is Empty", isEmpty());
         colorSensors.updateTelemetry();
     }
 

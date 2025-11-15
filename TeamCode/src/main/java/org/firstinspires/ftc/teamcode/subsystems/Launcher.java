@@ -13,6 +13,7 @@ import com.seattlesolvers.solverslib.controller.PIDFController;
 import com.seattlesolvers.solverslib.controller.wpilibcontroller.SimpleMotorFeedforward;
 import com.seattlesolvers.solverslib.hardware.motors.Motor;
 import com.seattlesolvers.solverslib.hardware.motors.MotorEx;
+import com.seattlesolvers.solverslib.hardware.motors.MotorGroup;
 
 @Configurable
 public class Launcher extends Subsystem {
@@ -22,7 +23,9 @@ public class Launcher extends Subsystem {
     private final HardwareMap hwMap;
     private final RobotState robotState = RobotState.getInstance();
 
-    private MotorEx motor;
+    private MotorEx motor1;
+    private MotorEx motor2;
+    private MotorGroup motors;
 
     private final PIDFController velocityController = new PIDFController(0, 0, 0, 0);
 
@@ -55,10 +58,18 @@ public class Launcher extends Subsystem {
 
     @Override
     public void init() {
-        motor = new MotorEx(hwMap, "Launcher", Motor.GoBILDA.BARE);
-        motor.setInverted(true);
-        motor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
-        motor.setRunMode(Motor.RunMode.RawPower);
+        motor1 = new MotorEx(hwMap, "Launcher", Motor.GoBILDA.BARE);
+        motor1.setInverted(true);
+        motor1.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
+        motor1.setRunMode(Motor.RunMode.RawPower);
+
+        motor2 = new MotorEx(hwMap, "Launcher2", Motor.GoBILDA.BARE);
+        motor2.setInverted(false);
+        motor2.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        motor2.setRunMode(Motor.RunMode.RawPower);
+
+        motors = new MotorGroup(motor1, motor2);
+        motors.setRunMode(Motor.RunMode.RawPower);
         velocityController.setPIDF(kP, kI, kD, 0);
         feedforward = new SimpleMotorFeedforward(kS, kV, kA);
     }
@@ -80,12 +91,13 @@ public class Launcher extends Subsystem {
                 break;
         }
 
-        currentRpm = (motor.getCorrectedVelocity() / 28) * 60;
+        currentRpm = (motor1.getCorrectedVelocity() / 28) * 60;
 
 //        velocityController.setPIDF(kP, kI, kD, 0);
 //        feedforward = new SimpleMotorFeedforward(kS, kV, kA);
 
-        motor.set(Math.max(0,velocityController.calculate(currentRpm, targetRpm) + feedforward.calculate(targetRpm, motor.getAcceleration())));
+//        motor1.set(Math.max(0,velocityController.calculate(currentRpm, targetRpm) + feedforward.calculate(targetRpm, motor1.getAcceleration())));
+        motors.set(Math.max(0,velocityController.calculate(currentRpm, targetRpm) + feedforward.calculate(targetRpm, motor1.getAcceleration())));
 
         robotState.setLauncherReady(Math.abs(currentRpm - targetRpm) < 50 && state != LauncherState.IDLE);
         updateTelemetry();
@@ -103,7 +115,7 @@ public class Launcher extends Subsystem {
 
     @Override
     public void stop() {
-        motor.stopMotor();
+        motor1.stopMotor();
     }
 
     private double distanceToRpm(double distanceInches) {

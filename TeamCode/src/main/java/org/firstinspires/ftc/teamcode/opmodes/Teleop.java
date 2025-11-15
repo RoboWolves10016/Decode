@@ -148,9 +148,9 @@ public class Teleop extends OpMode {
         if (operator.getButton(GamepadKeys.Button.B)) {
             launcher.setIdle();
         }
-//        if (operator.getButton(GamepadKeys.Button.X)) {
-//            launcher.setPreset();
-//        }
+        if (gamepad2.dpad_up) {
+            launcher.setPreset();
+        }
 
         if (gamepad2.right_trigger > 0.1) {
             spindexer.setFeedType(Spindexer.FeedType.PEWPEWPEW);
