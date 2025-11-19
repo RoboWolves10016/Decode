@@ -17,19 +17,21 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
             .mass(10.4)
-            .forwardZeroPowerAcceleration(-32.4627)
-            .lateralZeroPowerAcceleration(-56.493)
-            .translationalPIDFCoefficients(new PIDFCoefficients(0.1,0, 0.01, 0.01))
+            .forwardZeroPowerAcceleration(-34.115)
+            .lateralZeroPowerAcceleration(-49.304)
+            .translationalPIDFCoefficients(new PIDFCoefficients(0.1,0, 0.01, 0.00))
 //            .translationalPIDFCoefficients(new PIDFCoefficients(0.01,0, 0.001, 0))
-            .headingPIDFCoefficients(new PIDFCoefficients(0.8,0,0.03,0))
-            .drivePIDFCoefficients(new FilteredPIDFCoefficients(1, 0, 0.1, 0.06, 0))
-//            .centripetalScaling(0.0011);
-            .centripetalScaling(0.0);
+    //            .headingPIDFCoefficients(new PIDFCoefficients(0.08,0,0.03,0))
+            .headingPIDFCoefficients(new PIDFCoefficients(1.0,0,0.03,0.02))
+//            .drivePIDFCoefficients(new FilteredPIDFCoefficients(/*1*/0.25, 0, 0.1, 0.06, 0))
+            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.004, 0, 0.0002, 0.06, 0))
+            .centripetalScaling(0.0004);
+//            .centripetalScaling(0.0);
 
     public static MecanumConstants mecanumConstants =  new MecanumConstants()
             .maxPower(1.0)
-            .xVelocity(65.7391)
-            .yVelocity(56.276)
+            .xVelocity(60.567)
+            .yVelocity(50.081)
             .leftFrontMotorName("Wheel1")
             .rightFrontMotorName("Wheel2")
             .leftRearMotorName("Wheel3")

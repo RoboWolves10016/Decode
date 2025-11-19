@@ -8,6 +8,9 @@ import androidx.annotation.Nullable;
 import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.math.Vector;
+import com.pedropathing.util.Timer;
+import com.qualcomm.robotcore.util.ElapsedTime;
+import com.seattlesolvers.solverslib.util.Timing;
 
 import org.firstinspires.ftc.teamcode.util.Alliance;
 import org.firstinspires.ftc.teamcode.util.Pattern;
@@ -81,8 +84,13 @@ public class RobotState {
     @Getter @Setter
     boolean limelightEnabled = true;
 
+    double lastTimeStamp = -1;
+
     public void addTelemetry(TelemetryManager telemetry) {
         telemetry.addLine("--------------ROBOT STATE--------------");
+        double newTimestamp = System.currentTimeMillis();
+        telemetry.addData("Last Loop Time (ms)", newTimestamp - lastTimeStamp);
+        lastTimeStamp = newTimestamp;
         telemetry.addData("Alliance", alliance.toString());
         telemetry.addData("Pattern", pattern.toString());
         telemetry.addData("Pose", poseToString(pose));
@@ -95,5 +103,6 @@ public class RobotState {
         telemetry.addData("Is Kicker Safe?", kickerSafe);
         telemetry.addData("SpindexerAlignedLaunch", spindexerAlignedForLaunch);
         telemetry.addData("SpindexerAlignedIntake", spindexerAlignedForIntake);
+        telemetry.addData("LauncherReady", launcherReady);
     }
 }

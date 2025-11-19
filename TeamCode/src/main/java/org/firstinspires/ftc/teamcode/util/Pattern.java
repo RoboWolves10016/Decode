@@ -1,9 +1,9 @@
 package org.firstinspires.ftc.teamcode.util;
 
 public enum Pattern {
-    GPP(21,1),
-    PGP(22,2),
-    PPG(23, 3);
+    GPP(21,0),
+    PGP(22,1),
+    PPG(23, 2);
 
 
     public int obeliskID;

@@ -106,7 +106,6 @@ public class Kicker extends Subsystem{
         // State transition logic
         if (position > TOP_THRESHOLD || timer.seconds() > 0.5) {
             currentState = KickerState.RETURNING;
-            lastKickedSlot = robotState.getCurrentSlot();
         }
     }
 
@@ -125,6 +124,7 @@ public class Kicker extends Subsystem{
         telemetry.addData("Servo Setpoint", setpoint);
         telemetry.addData("Current State", currentState);
         telemetry.addData("Want Feed", feedBall);
+        telemetry.addData("Last Kicked", lastKickedSlot == null ? "None" : lastKickedSlot.toString());
     }
 
     @Override

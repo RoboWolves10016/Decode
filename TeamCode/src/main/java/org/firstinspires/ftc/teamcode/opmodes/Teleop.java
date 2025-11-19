@@ -57,6 +57,7 @@ public class Teleop extends OpMode {
         operator = new GamepadEx(gamepad2);
 
         drivetrain = new Drive(hardwareMap, driver);
+        drivetrain.init();
 
         limelight = new Limelight(hardwareMap);
         limelight.init();
@@ -106,7 +107,6 @@ public class Teleop extends OpMode {
         telemetryManager.addLine("OpMode Initialization Completed!!!");
         telemetryManager.addData("Alliance", RobotState.getInstance().getAlliance());
         telemetryManager.update(telemetry);
-
     }
 
     private void processInputs() {
@@ -114,6 +114,8 @@ public class Teleop extends OpMode {
             intake.runIntake();
             kicker.resetHistory();
             spindexer.setIntakeMode();
+        } else if (RobotState.getInstance().isLauncherReady()) {
+            spindexer.setLaunchMode();
         } else {
             intake.stopIntake();
         }
@@ -144,10 +146,10 @@ public class Teleop extends OpMode {
             launcher.setIdle();
         }
 
-
         if (operator.getButton(GamepadKeys.Button.B)) {
             launcher.setIdle();
         }
+
         if (gamepad2.dpad_up) {
             launcher.setPreset();
         }
@@ -156,18 +158,21 @@ public class Teleop extends OpMode {
             spindexer.setFeedType(Spindexer.FeedType.PEWPEWPEW);
             spindexer.setLaunchMode();
             kicker.feed();
-        }
-
-        if (gamepad2.a && spindexer.hasGreen()) {
+        } else if (gamepad2.a && spindexer.hasGreen()) {
             spindexer.setFeedType(Spindexer.FeedType.GREEN);
             spindexer.setLaunchMode();
             kicker.feed();
-        }
-
-        if (gamepad2.x && spindexer.hasPurple()) {
+        } else if (gamepad2.x && spindexer.hasPurple()) {
             spindexer.setFeedType(Spindexer.FeedType.PURPLE);
             spindexer.setLaunchMode();
             kicker.feed();
+        } else if (gamepad2.dpad_down) {
+            spindexer.setFeedType(Spindexer.FeedType.PATTERN);
+            spindexer.setLaunchMode();
+            kicker.feed();
+        }else {
+            kicker.stopFeed();
+            spindexer.setFeedType(Spindexer.FeedType.PEWPEWPEW);
         }
 
     }

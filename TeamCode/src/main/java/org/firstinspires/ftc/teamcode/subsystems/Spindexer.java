@@ -1,10 +1,12 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.bylazar.configurables.annotations.Configurable;
+import com.bylazar.lights.RGBIndicator;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.hardware.AbsoluteAnalogEncoder;
 import com.seattlesolvers.solverslib.hardware.ServoEx;
@@ -33,10 +35,14 @@ public class Spindexer extends Subsystem {
     private ServoEx servo;
     private final ColorSensors colorSensors;
     private AbsoluteAnalogEncoder encoder;
+    private Servo light;
 
-//    private DigitalChannel beamBreak;
+    @Setter
+    private double COLOR_SENSOR_DELAY = 0.1;
+
     // Current status of the subsystem
     private double setpoint = 0;
+    private LightState lightState = LightState.OFF;
     private SpindexerSlot currentSlot = SpindexerSlot.ONE;
     private BallState slot1State = BallState.EMPTY;
     private BallState slot2State = BallState.EMPTY;
@@ -46,9 +52,13 @@ public class Spindexer extends Subsystem {
     private boolean ballKicked = false;
     private boolean lastBallKicked = false;
 
-    @Setter
+    private int patternIndex = 0;   // This variable tracks which ball (0-2) of the pattern we want to shoot next
     private FeedType feedType = FeedType.PEWPEWPEW;
-    private int patternIndex = 1;   // This variable tracks which ball (1-3) of the pattern we want to shoot next
+
+    public void setFeedType(FeedType newType) {
+        if (newType == FeedType.PATTERN && feedType != FeedType.PATTERN) patternIndex = 0;
+        this.feedType = newType;
+    }
     private double currentPosition;
 
     public Spindexer(HardwareMap hwMap) {
@@ -65,7 +75,7 @@ public class Spindexer extends Subsystem {
         servo = new ServoEx(
                 hwMap,
                 "Spindexer");
-//        beamBreak = hwMap.get(DigitalChannel.class, "LauncherSensor");
+        light = hwMap.get(Servo.class, "TopLight");
         colorSensors.init();
 
         servo.getServo().getController().pwmEnable();
@@ -74,8 +84,6 @@ public class Spindexer extends Subsystem {
     @Override
     public void run() {
         currentPosition = encoder.getCurrentPosition();
-        // Run color sensors before logic that checks them
-        colorSensors.run();
         // Based on the state, determine which spindexer slot is desired and go to it
         ballKicked = robotState.isBallKicked();
 
@@ -92,6 +100,7 @@ public class Spindexer extends Subsystem {
 
         lastBallKicked = ballKicked;
         servo.set(setpoint);
+        light.setPosition(lightState.pwmSignal);
         // Update Robot State variables
         robotState.setCurrentSlot(currentSlot);
         robotState.setFull(isFull());
@@ -103,14 +112,30 @@ public class Spindexer extends Subsystem {
     private void runIntake() {
         currentSlot = getNextIntakeSlot();
         setpoint = currentSlot.intakePosition;
-
         robotState.setSpindexerAlignedForIntake(
                 Math.abs(currentPosition - currentSlot.intakeMeasurement)
                         < Tuning.SPINDEXER_ALIGNED_TOLERANCE_DEG);
 
         if (robotState.isSpindexerAlignedForIntake()) {
-            setSlotData(currentSlot, colorSensors.getCurrentBallState());
+            // Run color sensors before logic that checks them
+            colorSensors.run();
+            if (colorSensors.getCurrentStateDuration() > 0.1) {
+                setSlotData(currentSlot, colorSensors.getCurrentBallState());
+            }
+            switch (colorSensors.getCurrentBallState()) {
+                case EMPTY:
+                    lightState = LightState.OFF;
+                    break;
+                case GREEN:
+                    lightState = LightState.GREEN;
+                    break;
+                case PURPLE:
+                    lightState = LightState.PURPLE;
+                    break;
+            }
         }
+
+        if (colorSensors.getCurrentStateDuration() > 0.5 && isFull()) lightState = LightState.PINK;
     }
 
     // LAUNCH STATE CODE
@@ -123,10 +148,19 @@ public class Spindexer extends Subsystem {
 
         if (robotState.isSpindexerAlignedForLaunch() && !lastBallKicked && ballKicked) {
             setSlotData(currentSlot, BallState.EMPTY);
+            if (feedType == FeedType.PATTERN) {
+                patternIndex += 1;
+                patternIndex %= 3;
+            }
         }
         robotState.setSpindexerAlignedForLaunch(
                 Math.abs(currentPosition - currentSlot.launchMeasurement)
                         < Tuning.SPINDEXER_ALIGNED_TOLERANCE_DEG);
+        if (robotState.isLauncherReady()) {
+            lightState = LightState.SAGE;
+        } else {
+            lightState = LightState.RED;
+        }
     }
 
     @Override
@@ -141,6 +175,7 @@ public class Spindexer extends Subsystem {
         telemetry.addData("Slot 2 State", slot2State);
         telemetry.addData("Slot 3 State", slot3State);
         telemetry.addData("Is Empty", isEmpty());
+        telemetry.addData("Next Pattern Index", patternIndex);
         colorSensors.updateTelemetry();
     }
 
@@ -197,7 +232,7 @@ public class Spindexer extends Subsystem {
                 return getNextPatternSlot();
             case PEWPEWPEW:
                 // Just return the first loaded slot
-                if (getSlotData(currentSlot) != BallState.EMPTY) return currentSlot;
+//                if (getSlotData(currentSlot) != BallState.EMPTY) return currentSlot;
                 if (slot1State != BallState.EMPTY) {
                     return SpindexerSlot.ONE;
                 } else if (slot3State != BallState.EMPTY) {
@@ -236,7 +271,7 @@ public class Spindexer extends Subsystem {
 
     private SpindexerSlot getNextPatternSlot() {
         Pattern pattern = robotState.getPattern();
-        if (patternIndex == pattern.greenIndex) {
+        if (patternIndex % 3 == pattern.greenIndex) {
             return getNextGreenSlot();
         } else {
             return getNextPurpleSlot();
@@ -308,5 +343,20 @@ public class Spindexer extends Subsystem {
         GREEN,
         PURPLE,
         PATTERN
+    }
+
+    public enum LightState {
+        PINK(0.722),
+        OFF(0.0),
+        GREEN(0.500),
+        PURPLE(0.666),
+        SAGE(0.444),
+        RED(0.277);
+
+        public final double pwmSignal;
+
+        private LightState(double pwm) {
+            this.pwmSignal = pwm;
+        }
     }
 }

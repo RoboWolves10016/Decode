@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import androidx.annotation.ColorInt;
+
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.qualcomm.robotcore.hardware.ColorRangeSensor;
@@ -25,12 +27,12 @@ public class ColorSensors extends Subsystem {
     private int lRed = 0;
     private int lGreen = 0;
     private int lBlue = 0;
-    private int lAlph = 0;
+//    private int lAlph = 0;
     private double lDist = 0;
     private int rRed = 0;
     private int rGreen = 0;
     private int rBlue = 0;
-    private int rAlph = 0;
+//    private int rAlph = 0;
     private double rDist = 0;
     private BallState overallState = BallState.EMPTY;
 
@@ -47,16 +49,19 @@ public class ColorSensors extends Subsystem {
 
     @Override
     public void run() {
-        lRed = left.red();
-        lGreen = left.green();
-        lBlue = left.blue();
-        lAlph = left.alpha();
+        @ColorInt int leftColors = left.argb();
+
+        lRed = getRed(leftColors);
+        lGreen = getGreen(leftColors);
+        lBlue = getBlue(leftColors);
+//        lAlph = left.alpha();
         lDist = left.getDistance(DistanceUnit.MM);
 
-        rRed = right.red();
-        rGreen = right.green();
-        rBlue = right.blue();
-        rAlph = right.alpha();
+        @ColorInt int rightColors = right.argb();
+        rRed = getRed(rightColors);
+        rGreen = getGreen(rightColors);
+        rBlue = getBlue(rightColors);
+//        rAlph = right.alpha();
         rDist = right.getDistance(DistanceUnit.MM);
 
         if (Double.isNaN(rDist) || rDist > 200) {
@@ -78,7 +83,7 @@ public class ColorSensors extends Subsystem {
         BallState newState = BallState.EMPTY;
         if (leftState != BallState.EMPTY && rightState != BallState.EMPTY) {
             if (leftState == rightState) {
-                newState = leftState;
+                newState = rightState;
             }
         }
         if (newState != overallState) {
@@ -90,9 +95,9 @@ public class ColorSensors extends Subsystem {
     @Override
     protected void updateTelemetry() {
         telemetry.addLine("--------------COLOR SENSORS--------------");
-        telemetry.addData("Left (r,g,b,a):", lRed + ", " + lGreen + ", " + lBlue + ", " + lAlph);
+        telemetry.addData("Left (r,g,b,a):", lRed + ", " + lGreen + ", " + lBlue);// + ", " + lAlph);
         telemetry.addData("Left Distance", lDist);
-        telemetry.addData("Right (r,g,b,a):", rRed + ", " + rGreen + ", " + rBlue + ", " + rAlph);
+        telemetry.addData("Right (r,g,b,a):", rRed + ", " + rGreen + ", " + rBlue);// + ", " + rAlph);
         telemetry.addData("Right Distance", rDist);
         telemetry.addData("LeftState", leftState);
         telemetry.addData("RightState", rightState);
@@ -110,6 +115,18 @@ public class ColorSensors extends Subsystem {
 
     public double getCurrentStateDuration() {
         return timer.seconds();
+    }
+
+    private int getRed(@ColorInt int color) {
+        return (color >> 16) & 0xFF;
+    }
+
+    private int getGreen(@ColorInt int color) {
+        return (color >> 8) & 0xFF;
+    }
+
+    private int getBlue(@ColorInt int color) {
+        return color & 0xFF;
     }
 
 }
