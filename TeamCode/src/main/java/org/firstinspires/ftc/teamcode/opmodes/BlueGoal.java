@@ -5,9 +5,6 @@ import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.launchPose;
 import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.postIntake1;
 import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.postIntake2;
 import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.postIntake3;
-import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.row1Control;
-import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.row2Control;
-import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.row3Control;
 
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
@@ -84,7 +81,7 @@ public class BlueGoal extends OpMode {
         robotState.setAlliance(alliance);
         robotState.setLimelightEnabled(false);
         GoalAutonPoses.setAlliance(alliance);
-        createPaths();
+        GoalAutonPoses.createPaths(follower, alliance);
 
     }
 
@@ -280,93 +277,6 @@ public class BlueGoal extends OpMode {
     }
 
 
-    private void createPaths() {
-        startToLaunch = follower
-                .pathBuilder()
-                .addPath(
-                        new BezierLine(GoalAutonPoses.startPose, GoalAutonPoses.launchPose)
-                )
-                .setHeadingInterpolation(HeadingInterpolator.facingPoint(alliance.goalPose))
-                .build();
-
-        launchToRow3 = follower
-                .pathBuilder()
-                .addPath(new BezierCurve(launchPose, row3Control, postIntake3))
-//                .setLinearHeadingInterpolation(launchPose.getHeading(), postIntake3.getHeading())
-                .setHeadingInterpolation(HeadingInterpolator.piecewise(
-                        new HeadingInterpolator.PiecewiseNode(
-                                0.0,
-                                0.2,
-                                HeadingInterpolator.linear(launchPose.getHeading(), postIntake3.getHeading())),
-                        new HeadingInterpolator.PiecewiseNode(
-                                0.2,
-                                1.0,
-                                HeadingInterpolator.constant(postIntake3.getHeading())
-                        )
-                ))
-                .addParametricCallback(0.2, () -> follower.setMaxPower(0.3))
-                .build();
-
-        row3ToLaunch = follower
-                .pathBuilder()
-                .addPath(new BezierLine(postIntake3, launchPose))
-                .setHeadingInterpolation(HeadingInterpolator.facingPoint(alliance.goalPose))
-                .build();
-
-        launchToRow2 = follower
-                .pathBuilder()
-                .addPath(new BezierCurve(launchPose, row2Control, postIntake2))
-//                .setLinearHeadingInterpolation(launchPose.getHeading(), postIntake2.getHeading())
-                .setHeadingInterpolation(HeadingInterpolator.piecewise(
-                        new HeadingInterpolator.PiecewiseNode(
-                                0.0,
-                                0.5,
-                                HeadingInterpolator.linear(launchPose.getHeading(), postIntake2.getHeading())),
-                        new HeadingInterpolator.PiecewiseNode(
-                                0.5,
-                                1.0,
-                                HeadingInterpolator.constant(postIntake3.getHeading())
-                        )
-                ))
-
-                .addParametricCallback(0.5, () -> follower.setMaxPower(0.3))
-                .build();
-
-        row2ToLaunch = follower
-                .pathBuilder()
-                .addPath(new BezierLine(postIntake2, launchPose))
-                .setHeadingInterpolation(HeadingInterpolator.facingPoint(alliance.goalPose))
-                .build();
-
-        launchToRow1 = follower
-                .pathBuilder()
-                .addPath(new BezierCurve(launchPose, row1Control, postIntake1))
-                .addParametricCallback(0.5, () -> follower.setMaxPower(0.4))
-                .setHeadingInterpolation(HeadingInterpolator.piecewise(
-                        new HeadingInterpolator.PiecewiseNode(
-                                0.0,
-                                0.5,
-                                HeadingInterpolator.linear(launchPose.getHeading(), postIntake1.getHeading())),
-                        new HeadingInterpolator.PiecewiseNode(
-                                0.5,
-                                1.0,
-                                HeadingInterpolator.constant(postIntake3.getHeading())
-                        )
-                ))
-                .build();
-
-        row1ToLaunch = follower
-                .pathBuilder()
-                .addPath(new BezierLine(postIntake1, launchPose))
-                .setHeadingInterpolation(HeadingInterpolator.facingPoint(alliance.goalPose))
-                .build();
-
-        launchToEnd = follower
-                .pathBuilder()
-                .addPath(new BezierLine(launchPose, endPose))
-                .setLinearHeadingInterpolation(launchPose.getHeading(), endPose.getHeading())
-                .build();
-    }
 
     public void drawOnlyCurrent() {
         try {

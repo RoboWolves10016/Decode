@@ -1,29 +1,16 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
-import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.endPose;
-import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.launchPose;
-import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.postIntake1;
-import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.postIntake2;
-import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.postIntake3;
-import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.row1Control;
-import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.row2Control;
-import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.row3Control;
+import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.*;
 
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.BezierCurve;
-import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
-import com.pedropathing.paths.HeadingInterpolator;
-import com.pedropathing.paths.Path;
-import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 
-import org.firstinspires.ftc.teamcode.Constants;
 import org.firstinspires.ftc.teamcode.RobotState;
 import org.firstinspires.ftc.teamcode.pedropathing.Tuning;
 import org.firstinspires.ftc.teamcode.subsystems.Drive;
@@ -34,7 +21,6 @@ import org.firstinspires.ftc.teamcode.subsystems.Limelight;
 import org.firstinspires.ftc.teamcode.subsystems.Spindexer;
 import org.firstinspires.ftc.teamcode.util.Alliance;
 import org.firstinspires.ftc.teamcode.util.BallState;
-import org.firstinspires.ftc.teamcode.util.PoseUtils;
 import org.firstinspires.ftc.teamcode.util.SpindexerSlot;
 
 @Autonomous(name = "Red Goal")
@@ -45,14 +31,6 @@ public class RedGoal extends OpMode {
     private final Alliance alliance = Alliance.RED;
     TelemetryManager telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
     // Paths
-    PathChain startToLaunch;
-    PathChain launchToRow3;
-    PathChain row3ToLaunch;
-    PathChain launchToRow2;
-    PathChain row2ToLaunch;
-    PathChain launchToRow1;
-    PathChain row1ToLaunch;
-    PathChain launchToEnd;
     private Drive drivetrain;
     private Follower follower;
     private Launcher launcher;
@@ -83,7 +61,7 @@ public class RedGoal extends OpMode {
         robotState.setAlliance(alliance);
         robotState.setLimelightEnabled(false);
         GoalAutonPoses.setAlliance(alliance);
-        createPaths();
+        GoalAutonPoses.createPaths(follower, alliance);
 
     }
 
@@ -189,9 +167,7 @@ public class RedGoal extends OpMode {
                 launcher.setAuto();
 
                 if (!follower.isBusy() || stateTimer.seconds() > 3) {
-//                    advanceAutonState();
-                    autonState = 14;
-                    stateTimer.reset();
+                    advanceAutonState();
                     spindexer.setFeedType(Spindexer.FeedType.PEWPEWPEW);
                     spindexer.setFeedType(Spindexer.FeedType.PATTERN);
                     spindexer.setLaunchMode();
@@ -278,94 +254,13 @@ public class RedGoal extends OpMode {
         stateTimer.reset();
     }
 
-
-    private void createPaths() {
-        startToLaunch = follower
-                .pathBuilder()
-                .addPath(
-                        new BezierLine(GoalAutonPoses.startPose, GoalAutonPoses.launchPose)
-                )
-                .setHeadingInterpolation(HeadingInterpolator.facingPoint(alliance.goalPose))
-                .build();
-
-        launchToRow3 = follower
-                .pathBuilder()
-                .addPath(new BezierCurve(launchPose, row3Control, postIntake3))
-//                .setLinearHeadingInterpolation(launchPose.getHeading(), postIntake3.getHeading())
-                .setHeadingInterpolation(HeadingInterpolator.piecewise(
-                        new HeadingInterpolator.PiecewiseNode(
-                                0.0,
-                                0.2,
-                                HeadingInterpolator.linear(launchPose.getHeading(), postIntake3.getHeading())),
-                        new HeadingInterpolator.PiecewiseNode(
-                                0.2,
-                                1.0,
-                                HeadingInterpolator.constant(postIntake3.getHeading())
-                        )
-                ))
-                .addParametricCallback(0.2, () -> follower.setMaxPower(0.3))
-                .build();
-
-        row3ToLaunch = follower
-                .pathBuilder()
-                .addPath(new BezierLine(postIntake3, launchPose))
-                .setHeadingInterpolation(HeadingInterpolator.facingPoint(alliance.goalPose))
-                .build();
-
-        launchToRow2 = follower
-                .pathBuilder()
-                .addPath(new BezierCurve(launchPose, row2Control, postIntake2))
-//                .setLinearHeadingInterpolation(launchPose.getHeading(), postIntake2.getHeading())
-                .setHeadingInterpolation(HeadingInterpolator.piecewise(
-                        new HeadingInterpolator.PiecewiseNode(
-                                0.0,
-                                0.5,
-                                HeadingInterpolator.linear(launchPose.getHeading(), postIntake2.getHeading())),
-                        new HeadingInterpolator.PiecewiseNode(
-                                0.5,
-                                1.0,
-                                HeadingInterpolator.constant(postIntake3.getHeading())
-                        )
-                ))
-
-                .addParametricCallback(0.5, () -> follower.setMaxPower(0.3))
-                .build();
-
-        row2ToLaunch = follower
-                .pathBuilder()
-                .addPath(new BezierLine(postIntake2, launchPose))
-                .setHeadingInterpolation(HeadingInterpolator.facingPoint(alliance.goalPose))
-                .build();
-
-        launchToRow1 = follower
-                .pathBuilder()
-                .addPath(new BezierCurve(launchPose, row1Control, postIntake1))
-                .addParametricCallback(0.5, () -> follower.setMaxPower(0.4))
-                .setHeadingInterpolation(HeadingInterpolator.piecewise(
-                        new HeadingInterpolator.PiecewiseNode(
-                                0.0,
-                                0.5,
-                                HeadingInterpolator.linear(launchPose.getHeading(), postIntake1.getHeading())),
-                        new HeadingInterpolator.PiecewiseNode(
-                                0.5,
-                                1.0,
-                                HeadingInterpolator.constant(postIntake3.getHeading())
-                        )
-                ))
-                .build();
-
-        row1ToLaunch = follower
-                .pathBuilder()
-                .addPath(new BezierLine(postIntake1, launchPose))
-                .setHeadingInterpolation(HeadingInterpolator.facingPoint(alliance.goalPose))
-                .build();
-
-        launchToEnd = follower
-                .pathBuilder()
-                .addPath(new BezierLine(launchPose, endPose))
-                .setLinearHeadingInterpolation(launchPose.getHeading(), endPose.getHeading())
-                .build();
+    private void advanceAutonState(int newState) {
+        autonState = newState;
+        stateTimer.reset();
     }
+
+
+
 
     public void drawOnlyCurrent() {
         try {
