@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.opmodes;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
+import com.pedropathing.geometry.BezierPoint;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.HeadingInterpolator;
 import com.pedropathing.paths.PathChain;
@@ -11,8 +12,12 @@ import org.firstinspires.ftc.teamcode.util.Alliance;
 
 public class GoalAutonPoses {
 
-    public static Pose startPose;
+    public static Pose obeliskPose = new Pose(72, 144);
+
+    public static Pose straightStartPose;
+    public static Pose sidewaysStartPose;
     public static Pose launchPose;
+    public static Pose endLaunchPose;
 //    public static Pose row3Control;
     public static Pose preIntake3;
     public static Pose postIntake3;
@@ -25,6 +30,7 @@ public class GoalAutonPoses {
     public static Pose endPose;
 
     public static PathChain startToLaunch;
+    public static PathChain startToLaunchObelisk;
     public static PathChain launchToRow3;
     public static PathChain row3ToLaunch;
     public static PathChain launchToRow2;
@@ -35,8 +41,11 @@ public class GoalAutonPoses {
 
 
     public static void setAlliance(Alliance alliance) {
-        startPose = new Pose(127.5, 124.5, Math.toRadians(35.3));
+        straightStartPose = new Pose(127.5, 124.5, Math.toRadians(35.3));
+
+        sidewaysStartPose = new Pose(126, 120, Math.toRadians(125.3));
         launchPose = new Pose(96, 96, Math.toRadians(50));
+        endLaunchPose = new Pose(89, 105);
         preIntake3 = new Pose(96, 84, Math.toRadians(0));
 //        row3Control = new Pose(86, 80);
         postIntake3 = new Pose(127, 84, Math.toRadians(0));
@@ -49,8 +58,10 @@ public class GoalAutonPoses {
         endPose = new Pose(100, 72, Math.toRadians(0));
 
         if (alliance == Alliance.BLUE) {
-            startPose = startPose.mirror();
+            straightStartPose = straightStartPose.mirror();
+            sidewaysStartPose = sidewaysStartPose.mirror();
             launchPose = launchPose.mirror();
+            endLaunchPose = endLaunchPose.mirror();
 
 //            row3Control = row3Control.mirror();
             preIntake3 = preIntake3.mirror();
@@ -72,7 +83,7 @@ public class GoalAutonPoses {
         startToLaunch = follower
                 .pathBuilder()
                 .addPath(
-                        new BezierLine(GoalAutonPoses.startPose, GoalAutonPoses.launchPose)
+                        new BezierLine(GoalAutonPoses.straightStartPose, GoalAutonPoses.launchPose)
                 )
                 .setHeadingInterpolation(HeadingInterpolator.facingPoint(alliance.goalPose))
                 .build();
@@ -95,6 +106,14 @@ public class GoalAutonPoses {
 //                .addParametricCallback(0.2, () -> follower.setMaxPower(0.3))
 //                .build();
 
+        startToLaunchObelisk = follower
+                .pathBuilder()
+                .addPath(new BezierLine(sidewaysStartPose, launchPose))
+                .setHeadingInterpolation(HeadingInterpolator.facingPoint(obeliskPose))
+                .addPath(new BezierLine(launchPose, launchPose))
+                .setHeadingInterpolation(HeadingInterpolator.facingPoint(alliance.goalPose))
+                .build();
+
         launchToRow3 = follower
                 .pathBuilder()
                 .addPath(new BezierLine(launchPose, preIntake3))
@@ -107,7 +126,7 @@ public class GoalAutonPoses {
 
         row3ToLaunch = follower
                 .pathBuilder()
-                .addPath(new BezierLine(postIntake3, launchPose))
+                .addPath(new BezierLine(postIntake3, endLaunchPose))
                 .setHeadingInterpolation(HeadingInterpolator.facingPoint(alliance.goalPose))
                 .build();
 

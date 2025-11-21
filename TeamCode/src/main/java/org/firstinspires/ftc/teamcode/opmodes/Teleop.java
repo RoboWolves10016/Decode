@@ -116,6 +116,7 @@ public class Teleop extends OpMode {
             spindexer.setIntakeMode();
         } else if (RobotState.getInstance().isLauncherReady()) {
             spindexer.setLaunchMode();
+            intake.stopIntake();
         } else {
             intake.stopIntake();
         }
@@ -142,7 +143,7 @@ public class Teleop extends OpMode {
 
         if (operator.getButton(GamepadKeys.Button.Y)) {
             launcher.setAuto();
-        } else if (spindexer.isEmpty()) {
+        } else if (spindexer.isEmpty() && kicker.isDoneKicking()) {
             launcher.setIdle();
         }
 

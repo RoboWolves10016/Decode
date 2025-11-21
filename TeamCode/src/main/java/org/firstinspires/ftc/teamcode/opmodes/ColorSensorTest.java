@@ -1,10 +1,15 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
+import android.graphics.Color;
+
+import androidx.annotation.ColorInt;
+
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.ColorRangeSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
@@ -22,20 +27,35 @@ public class ColorSensorTest extends OpMode {
 
     @Override
     public void loop() {
+        @ColorInt int left_argb = left.argb();
         telemetryM.addLine("--------LEFT SENSOR--------");
-        telemetryM.addData("Red", left.red());
-        telemetryM.addData("Blue", left.blue());
-        telemetryM.addData("Green", left.green());
-        telemetryM.addData("Alpha", left.alpha());
+        telemetryM.addData("Individual RGB", left.red() + ", " + left.green() + ", " + left.blue());
+        telemetryM.addData("Red", Color.red(left_argb));
+        telemetryM.addData("Blue", Color.blue(left_argb));
+        telemetryM.addData("Green", Color.green(left_argb));
         telemetryM.addData("Distance MM", left.getDistance(DistanceUnit.MM));
 
+        NormalizedRGBA right_argb = right.getNormalizedColors();
         telemetryM.addLine("--------RIGHT SENSOR--------");
-        telemetryM.addData("Red", right.red());
-        telemetryM.addData("Blue", right.blue());
-        telemetryM.addData("Green", right.green());
-        telemetryM.addData("Alpha", right.alpha());
+        telemetryM.addData("Individual RGB", right.red() + ", " + right.green() + ", " + right.blue());
+        telemetryM.addData("Red", 256 * right_argb.red);
+        telemetryM.addData("Blue", 256 * right_argb.blue);
+        telemetryM.addData("Green", 256 * right_argb.green);
         telemetryM.addData("Distance MM", right.getDistance(DistanceUnit.MM));
 
         telemetryM.update(telemetry);
     }
+
+    private int getRed(@ColorInt int color) {
+        return (color >> 16) & 0xFF;
+    }
+
+    private int getGreen(@ColorInt int color) {
+        return (color >> 8) & 0xFF;
+    }
+
+    private int getBlue(@ColorInt int color) {
+        return color & 0xFF;
+    }
+
 }

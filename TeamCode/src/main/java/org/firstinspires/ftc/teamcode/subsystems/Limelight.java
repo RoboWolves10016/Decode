@@ -110,7 +110,7 @@ public class Limelight extends Subsystem {
             if (r.getFiducialId() == 20 || r.getFiducialId() == 24) tagIdCheck = true;
         }
         return result.isValid()
-                && result.getBotposeAvgArea() > 0.4
+                && result.getBotposeAvgArea() > 0.25
                 && tagIdCheck && PoseUtils.isInField(pose)
                 && robotState.isNotMoving();
     }

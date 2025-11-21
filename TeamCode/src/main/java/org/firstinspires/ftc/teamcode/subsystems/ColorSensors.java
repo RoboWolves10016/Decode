@@ -6,6 +6,7 @@ import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.qualcomm.robotcore.hardware.ColorRangeSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -24,14 +25,14 @@ public class ColorSensors extends Subsystem {
     private BallState leftState = BallState.EMPTY;
     private BallState rightState = BallState.EMPTY;
 
-    private int lRed = 0;
-    private int lGreen = 0;
-    private int lBlue = 0;
+    private float lRed = 0;
+    private float lGreen = 0;
+    private float lBlue = 0;
 //    private int lAlph = 0;
     private double lDist = 0;
-    private int rRed = 0;
-    private int rGreen = 0;
-    private int rBlue = 0;
+    private float rRed = 0;
+    private float rGreen = 0;
+    private float rBlue = 0;
 //    private int rAlph = 0;
     private double rDist = 0;
     private BallState overallState = BallState.EMPTY;
@@ -49,18 +50,18 @@ public class ColorSensors extends Subsystem {
 
     @Override
     public void run() {
-        @ColorInt int leftColors = left.argb();
+        NormalizedRGBA leftColors = left.getNormalizedColors();
 
-        lRed = getRed(leftColors);
-        lGreen = getGreen(leftColors);
-        lBlue = getBlue(leftColors);
+        lRed = 256 * leftColors.red;
+        lGreen = 256 * leftColors.green;
+        lBlue = 256 * leftColors.blue;
 //        lAlph = left.alpha();
         lDist = left.getDistance(DistanceUnit.MM);
 
-        @ColorInt int rightColors = right.argb();
-        rRed = getRed(rightColors);
-        rGreen = getGreen(rightColors);
-        rBlue = getBlue(rightColors);
+        NormalizedRGBA rightColors = right.getNormalizedColors();
+        rRed = 256 * rightColors.red;
+        rGreen = 256 * rightColors.green;
+        rBlue = 256 * rightColors.blue;
 //        rAlph = right.alpha();
         rDist = right.getDistance(DistanceUnit.MM);
 

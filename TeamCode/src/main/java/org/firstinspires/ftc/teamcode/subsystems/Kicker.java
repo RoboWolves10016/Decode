@@ -27,6 +27,7 @@ public class Kicker extends Subsystem{
     public static final double SAFE_THRESHOLD = 165;
 
     public static final double TOP_THRESHOLD = 175;
+    private final ElapsedTime doneKickingTimer = new ElapsedTime();
 
     private enum KickerState {
         IDLE,
@@ -79,6 +80,7 @@ public class Kicker extends Subsystem{
         }
 
         robotState.setBallKicked(currentState == KickerState.RETURNING);
+        if (currentState == KickerState.RETURNING && lastState == KickerState.KICKING) doneKickingTimer.reset();
 
         lastState = currentState;
         servo.set(setpoint);
@@ -130,6 +132,10 @@ public class Kicker extends Subsystem{
     @Override
     public void stop() {
 
+    }
+
+    public boolean isDoneKicking() {
+        return doneKickingTimer.seconds() >= 0.25;
     }
 
     public void feed() {

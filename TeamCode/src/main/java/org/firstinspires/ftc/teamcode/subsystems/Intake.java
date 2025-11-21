@@ -18,7 +18,6 @@ public class Intake extends Subsystem {
     private enum IntakeState {
         IDLE,
         WAIT,
-        FAST_WAIT,
         INTAKE,
         FULL
     }
@@ -50,10 +49,7 @@ public class Intake extends Subsystem {
                 motor.set(1);
                 break;
             case WAIT:
-                motor.set(0.3);
-                break;
-            case FAST_WAIT:
-                motor.set(0.4);
+                motor.set(0.2);
                 break;
             case FULL:
                 motor.set(-0.3);
@@ -85,14 +81,6 @@ public class Intake extends Subsystem {
             currentState = IntakeState.INTAKE;
         } else {
             currentState = IntakeState.WAIT;
-        }
-    }
-
-    public void runIntakeAuton() {
-        if (robotState.isSpindexerAlignedForIntake()) {
-            currentState = IntakeState.INTAKE;
-        } else {
-            currentState = IntakeState.FAST_WAIT;
         }
     }
 

@@ -1,26 +1,16 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
-import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.endPose;
-import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.launchPose;
-import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.postIntake1;
-import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.postIntake2;
-import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.postIntake3;
+import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.*;
 
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.BezierCurve;
-import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
-import com.pedropathing.paths.HeadingInterpolator;
-import com.pedropathing.paths.Path;
-import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 
-import org.firstinspires.ftc.teamcode.Constants;
 import org.firstinspires.ftc.teamcode.RobotState;
 import org.firstinspires.ftc.teamcode.pedropathing.Tuning;
 import org.firstinspires.ftc.teamcode.subsystems.Drive;
@@ -31,26 +21,16 @@ import org.firstinspires.ftc.teamcode.subsystems.Limelight;
 import org.firstinspires.ftc.teamcode.subsystems.Spindexer;
 import org.firstinspires.ftc.teamcode.util.Alliance;
 import org.firstinspires.ftc.teamcode.util.BallState;
-import org.firstinspires.ftc.teamcode.util.PoseUtils;
 import org.firstinspires.ftc.teamcode.util.SpindexerSlot;
 
-@Autonomous(name = "Blue Goal")
-public class BlueGoal extends OpMode {
+@Autonomous(name = "Red Goal 12 NP")
+public class RedGoal12NP extends OpMode {
     private final RobotState robotState = RobotState.getInstance();
     private final ElapsedTime stateTimer = new ElapsedTime();
 
-    private final Alliance alliance = Alliance.BLUE;
+    private final Alliance alliance = Alliance.RED;
     TelemetryManager telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
     // Paths
-    PathChain startToLaunch;
-    PathChain launchToRow3;
-    PathChain row3ToLaunch;
-    PathChain launchToRow2;
-    PathChain row2ToLaunch;
-    PathChain launchToRow1;
-    PathChain row1ToLaunch;
-    PathChain launchToEnd;
-    Path path;
     private Drive drivetrain;
     private Follower follower;
     private Launcher launcher;
@@ -66,7 +46,7 @@ public class BlueGoal extends OpMode {
         drivetrain.init();
         drivetrain.startAuton();
         follower = drivetrain.getFollower();
-        follower.setStartingPose(new Pose(125.135, 121.153, Math.toRadians(35.3)).mirror());
+        follower.setStartingPose(new Pose(125.135, 121.153, Math.toRadians(35.3)));
         launcher = new Launcher(hardwareMap);
         launcher.init();
         spindexer = new Spindexer(hardwareMap);
@@ -87,8 +67,11 @@ public class BlueGoal extends OpMode {
 
     @Override
     public void init_loop() {
+        limelight.run();
         follower.update();
+        follower.setStartingPose(new Pose(125.135, 121.153, Math.toRadians(35.3)));
         drawOnlyCurrent();
+        telemetryM.update(telemetry);
     }
 
     @Override
@@ -187,9 +170,7 @@ public class BlueGoal extends OpMode {
                 launcher.setAuto();
 
                 if (!follower.isBusy() || stateTimer.seconds() > 3) {
-//                    advanceAutonState();
-                    autonState = 14;
-                    stateTimer.reset();
+                    advanceAutonState();
                     spindexer.setFeedType(Spindexer.FeedType.PEWPEWPEW);
                     spindexer.setFeedType(Spindexer.FeedType.PATTERN);
                     spindexer.setLaunchMode();
@@ -275,6 +256,12 @@ public class BlueGoal extends OpMode {
         autonState = autonState + 1;
         stateTimer.reset();
     }
+
+    private void advanceAutonState(int newState) {
+        autonState = newState;
+        stateTimer.reset();
+    }
+
 
 
 
