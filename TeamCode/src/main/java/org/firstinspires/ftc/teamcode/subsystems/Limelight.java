@@ -14,7 +14,7 @@ import org.firstinspires.ftc.teamcode.RobotState;
 import org.firstinspires.ftc.teamcode.util.Pattern;
 import org.firstinspires.ftc.teamcode.util.PoseUtils;
 
-import java.util.Locale;
+import lombok.Getter;
 
 public class Limelight extends Subsystem {
 
@@ -30,6 +30,8 @@ public class Limelight extends Subsystem {
     private boolean valid = false;
     private LLResult result;
     private LLStatus status;
+    @Getter
+    private boolean hasSeenPattern = false;
 
     public Limelight(HardwareMap hwMap) {
         this.hwMap = hwMap;
@@ -73,6 +75,7 @@ public class Limelight extends Subsystem {
             // Set obelisk pattern if visible
             for (LLResultTypes.FiducialResult r : result.getFiducialResults()) {
                 if (r.getFiducialId() >= 21 && r.getFiducialId() <= 23) {
+                    hasSeenPattern = true;
                     int obeliskID = r.getFiducialId();
                     if (obeliskID == 21) {
                         robotState.setPattern(Pattern.GPP);
@@ -81,7 +84,6 @@ public class Limelight extends Subsystem {
                     } else {
                         robotState.setPattern(Pattern.PPG);
                     }
-
                 }
             }
         }

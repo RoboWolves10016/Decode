@@ -6,11 +6,13 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.HeadingInterpolator;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.teamcode.Constants;
 
 @Autonomous(name="AutonTest")
+@Disabled
 public class AutonTest extends OpMode {
     Follower follower = Constants.createFollower(hardwareMap);
     PathChain pathChain;

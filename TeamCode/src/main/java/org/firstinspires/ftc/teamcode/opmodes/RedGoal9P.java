@@ -6,6 +6,7 @@ import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.launchToRow2
 import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.launchToRow3;
 import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.row1ToLaunch;
 import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.row2ToLaunch;
+import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.row3ToDumpToLaunch;
 import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.row3ToLaunch;
 import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.startToLaunch;
 import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.startToLaunchObelisk;
@@ -74,14 +75,13 @@ public class RedGoal9P extends OpMode {
         robotState.setLimelightEnabled(false);
         GoalAutonPoses.setAlliance(alliance);
         GoalAutonPoses.createPaths(follower, alliance);
-
+        RobotState.getInstance().setAuton(true);
     }
 
     @Override
     public void init_loop() {
         limelight.run();
         follower.update();
-        follower.setStartingPose(new Pose(125.135, 121.153, Math.toRadians(35.3)));
         telemetryM.addData("Starting Pose", GoalAutonPoses.sidewaysStartPose);
         drawOnlyCurrent();
         telemetryM.update(telemetry);
@@ -95,7 +95,7 @@ public class RedGoal9P extends OpMode {
         spindexer.setSlotData(SpindexerSlot.THREE, BallState.PURPLE);
         spindexer.setFeedType(Spindexer.FeedType.PEWPEWPEW);
         spindexer.setFeedType(Spindexer.FeedType.PATTERN);
-        spindexer.setLaunchMode();
+        spindexer.setIntakeMode();
         stateTimer.reset();
     }
 
@@ -111,14 +111,14 @@ public class RedGoal9P extends OpMode {
                 break;
             case 1:
                 // Go to launch position
-//                follower.followPath(startToLaunch);
                 launcher.setAuto();
-                if (!follower.isBusy() || stateTimer.seconds() > 2) {
+                if ((!follower.isBusy() && follower.getAngularVelocity() < 0.1) || stateTimer.seconds() > 4) {
                     advanceAutonState();
                 }
                 break;
             case 2:
                 // Shoot
+                spindexer.setLaunchMode();
                 intake.stopIntake();
                 kicker.feed();
                 if (spindexer.isEmpty()) {
@@ -135,18 +135,20 @@ public class RedGoal9P extends OpMode {
 
                 if (!follower.isBusy() ||  stateTimer.seconds() > 5) {
                     advanceAutonState();
-                    follower.followPath(row3ToLaunch);
                     follower.setMaxPower(1.0);
+                    follower.followPath(row3ToDumpToLaunch);
                 }
                 break;
             case 4:
-                if (stateTimer.seconds() > 1) advanceAutonState();
+                advanceAutonState();
+                break;
             case 5:
                 // Go to launch position
                 launcher.setAuto();
 
-                if (!follower.isBusy() || stateTimer.seconds() > 3) {
+                if ((!follower.isBusy() && follower.getAngularVelocity() < 0.1) || stateTimer.seconds() > 6) {
                     advanceAutonState();
+//                    robotState.setLimelightEnabled(true);
                     spindexer.setFeedType(Spindexer.FeedType.PEWPEWPEW);
                     spindexer.setFeedType(Spindexer.FeedType.PATTERN);
                     spindexer.setLaunchMode();
@@ -177,21 +179,22 @@ public class RedGoal9P extends OpMode {
                 }
                 break;
             case 8:
-                if (stateTimer.seconds() > 1) advanceAutonState();
+                advanceAutonState();
+                break;
             case 9:
                 // Drive back to launch position
                 launcher.setAuto();
 
-                if (!follower.isBusy() || stateTimer.seconds() > 3) {
+                if ((!follower.isBusy() && follower.getAngularVelocity() < 0.1) || stateTimer.seconds() > 3) {
                     advanceAutonState();
+//                    robotState.setLimelightEnabled(true);
                     spindexer.setFeedType(Spindexer.FeedType.PEWPEWPEW);
                     spindexer.setFeedType(Spindexer.FeedType.PATTERN);
                     spindexer.setLaunchMode();
                 }
                 break;
-
             case 10:
-                // Shoot
+                // Launch the row 2 balls
                 intake.stopIntake();
                 kicker.feed();
                 if (spindexer.isEmpty()) {
@@ -201,34 +204,34 @@ public class RedGoal9P extends OpMode {
                     follower.followPath(launchToRow1);
                 }
                 break;
-//            case 11:
-//                // Start intaking and drive to row 1
-//                intake.runIntake();
-//                kicker.resetHistory();
-//                spindexer.setIntakeMode();
-//
-//                if (!follower.isBusy() || stateTimer.seconds() > 10) {
-//                    advanceAutonState();
-//                    follower.setMaxPower(1.0);
-//                    follower.followPath(row1ToLaunch);
-//                }
-//                break;
-//            case 12:
-//                if (stateTimer.seconds() > 1) advanceAutonState();
-//            case 13:
-//                // Drive back to launch position
-//                launcher.setAuto();
-//                if (!follower.isBusy() || stateTimer.seconds() > 3) {
-//                    advanceAutonState();
-//                    spindexer.setFeedType(Spindexer.FeedType.PEWPEWPEW);
-//                    spindexer.setFeedType(Spindexer.FeedType.PATTERN);
-//                    spindexer.setLaunchMode();
-//                }
-//                break;
             case 11:
-                // Launch
+                // Start intaking and drive to row 1
+                intake.runIntake();
+                spindexer.setIntakeMode();
+                kicker.resetHistory();
+
+                if (!follower.isBusy() || stateTimer.seconds() > 7) {
+                    advanceAutonState();
+                    follower.setMaxPower(1.0);
+                    follower.followPath(row1ToLaunch);
+                }
+                break;
+            case 12:
+                // Drive back to launch position
+                launcher.setAuto();
+
+                if ((!follower.isBusy() && follower.getAngularVelocity() < 0.1) || stateTimer.seconds() > 5) {
+                    advanceAutonState();
+                    spindexer.setFeedType(Spindexer.FeedType.PEWPEWPEW);
+                    spindexer.setFeedType(Spindexer.FeedType.PATTERN);
+                    spindexer.setLaunchMode();
+                }
+                break;
+            case 13:
+                // Shoot
                 intake.stopIntake();
                 kicker.feed();
+
                 if (spindexer.isEmpty()) {
                     advanceAutonState();
                     kicker.stopFeed();
@@ -236,8 +239,8 @@ public class RedGoal9P extends OpMode {
                     follower.followPath(launchToEnd);
                 }
                 break;
-            case 12:
-                // Move off line
+            case 15:
+                // Move off line to in front of gate
                 if (!follower.isBusy()) {
                     // Do Nothing
                 }

@@ -3,9 +3,9 @@ package org.firstinspires.ftc.teamcode.util;
 import org.firstinspires.ftc.teamcode.subsystems.Spindexer;
 
 public enum SpindexerSlot {
-    ONE(0.188, 0.745, 259, 79),
-    TWO(0.56, 0.002, 16, 196),
-    THREE(0.93, 0.375, 138, 318);
+    ONE(0.180, 0.742, 258.4, 75.6),
+    TWO(0.552, 0.00, 17, 196.4),
+    THREE(0.922, 0.371, 137.3, 316.85);
 
     public final double intakePosition;
     public final double launchPosition;

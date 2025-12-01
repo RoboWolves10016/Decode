@@ -19,12 +19,15 @@ public class Kicker extends Subsystem{
     private final HardwareMap hwMap;
     private final RobotState robotState;
 
+    public static boolean useManual = false;
+
     private ServoEx servo;
     private AbsoluteAnalogEncoder encoder;
 
     public static final double DOWN_POSITION = 0.4;
     public static final double UP_POSITION = 1.0;
     public static final double SAFE_THRESHOLD = 165;
+//    public static final double SAFE_THRESHOLD = 170;
 
     public static final double TOP_THRESHOLD = 175;
     private final ElapsedTime doneKickingTimer = new ElapsedTime();
@@ -43,6 +46,7 @@ public class Kicker extends Subsystem{
     private boolean feedBall = false;
     private double position;
     private double setpoint = DOWN_POSITION;
+    public static double manualSetpoint = DOWN_POSITION;
 
     private SpindexerSlot lastKickedSlot = null;
 
@@ -83,7 +87,7 @@ public class Kicker extends Subsystem{
         if (currentState == KickerState.RETURNING && lastState == KickerState.KICKING) doneKickingTimer.reset();
 
         lastState = currentState;
-        servo.set(setpoint);
+        servo.set(useManual ? manualSetpoint : setpoint);
         updateTelemetry();
     }
 

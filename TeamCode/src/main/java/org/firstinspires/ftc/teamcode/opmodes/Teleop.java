@@ -73,6 +73,8 @@ public class Teleop extends OpMode {
 
         launcher = new Launcher(hardwareMap);
         launcher.init();
+
+        RobotState.getInstance().setAuton(false);
     }
 
     @Override
@@ -120,10 +122,6 @@ public class Teleop extends OpMode {
         } else {
             intake.stopIntake();
         }
-
-        drivetrain.setAutoAim(gamepad1.left_bumper);
-        drivetrain.setRobotCentric(gamepad1.left_trigger > 0.1);
-        drivetrain.setSpeed(gamepad1.right_trigger > 0.1 ? 0.35 : 1.0);
 
         if(gamepad2.right_bumper) {
             spindexer.stepClockwise();

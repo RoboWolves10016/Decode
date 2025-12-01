@@ -31,6 +31,8 @@ public class Spindexer extends Subsystem {
     private final ElapsedTime stepTimer = new ElapsedTime();
     private final HardwareMap hwMap;
 
+    public static boolean manualPosition = false;
+
     // Hardware variables
     private ServoEx servo;
     private final ColorSensors colorSensors;
@@ -41,7 +43,7 @@ public class Spindexer extends Subsystem {
     private double COLOR_SENSOR_DELAY = 0.1;
 
     // Current status of the subsystem
-    private double setpoint = 0;
+    public static double setpoint = 0;
     private LightState lightState = LightState.OFF;
     private SpindexerSlot currentSlot = SpindexerSlot.ONE;
     private BallState slot1State = BallState.EMPTY;
@@ -111,7 +113,7 @@ public class Spindexer extends Subsystem {
     // INTAKE STATE CODE
     private void runIntake() {
         currentSlot = getNextIntakeSlot();
-        setpoint = currentSlot.intakePosition;
+        if (!manualPosition) setpoint = currentSlot.intakePosition;
         robotState.setSpindexerAlignedForIntake(
                 Math.abs(currentPosition - currentSlot.intakeMeasurement)
                         < Tuning.SPINDEXER_ALIGNED_TOLERANCE_DEG);

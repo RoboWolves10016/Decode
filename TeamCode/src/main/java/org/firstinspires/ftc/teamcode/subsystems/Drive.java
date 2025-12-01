@@ -4,18 +4,22 @@ import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.BezierLine;
+import com.pedropathing.geometry.BezierPoint;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.math.MathFunctions;
+import com.pedropathing.paths.HeadingInterpolator;
+import com.pedropathing.paths.Path;
+import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.seattlesolvers.solverslib.controller.PIDController;
-import com.seattlesolvers.solverslib.controller.wpilibcontroller.ProfiledPIDController;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
-import com.seattlesolvers.solverslib.trajectory.TrapezoidProfile;
+import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 
 import org.firstinspires.ftc.teamcode.Constants;
 import org.firstinspires.ftc.teamcode.RobotState;
 import org.firstinspires.ftc.teamcode.pedropathing.Tuning;
-import org.firstinspires.ftc.teamcode.util.PoseUtils;
+
+import java.util.function.Supplier;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -30,13 +34,7 @@ public class Drive extends Subsystem{
     private RobotState robotState;
 
     private boolean teleop = false;
-    @Setter
     private boolean robotCentric = false;
-    @Setter
-    private boolean autoAim = false;
-    private boolean lastAutoAim = false;
-
-    private double autoAimTarget = 0;
 
     private final GamepadEx driver;
 
@@ -45,25 +43,21 @@ public class Drive extends Subsystem{
     private double turnCommand = 0;
     private double headingToGoal = 0;
 
-    public static double aimP = 1;
-    public static double aimI = 0;
-    public static double aimD = 0.1;
-
-//    ProfiledPIDController autoAimController = new ProfiledPIDController(
-//            aimP,
-//            aimI,
-//            aimD,
-//            new TrapezoidProfile.Constraints(0.5, 2));
-
-    public double speedMultiplier = 1.0;
-
-    private final PIDController rotationController = new PIDController(aimP,aimI,aimD);
+    private Supplier<PathChain> aimPath;
+    private boolean slowMode = false;
+    private boolean autoAim = false;
+    private boolean lastAutoAim = false;
 
     public Drive(HardwareMap hwMap, GamepadEx driver) {
         this.telemetry = PanelsTelemetry.INSTANCE.getTelemetry();
         this.follower = Constants.createFollower(hwMap);
         this.robotState = RobotState.getInstance();
         this.driver = driver;
+
+        aimPath = () -> follower.pathBuilder()
+                .addPath(new Path(new BezierLine(follower::getPose, follower::getPose)))
+                .setHeadingInterpolation(HeadingInterpolator.facingPoint(robotState.getAlliance().goalPose))
+                .build();
     }
 
     @Override
@@ -74,12 +68,15 @@ public class Drive extends Subsystem{
     @Override
     public void run() {
 
-//        rotationController.setPID(aimP, aimI, aimD);
-        rotationController.setPID(aimP, aimI, aimD);
+        autoAim = driver.getButton(GamepadKeys.Button.LEFT_BUMPER);
+        slowMode = driver.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.1;
+        robotCentric = driver.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > 0.1;
 
-        forwardCommand = driver.getLeftY();// * speedMultiplier;
-        strafeCommand = -driver.getLeftX();// * speedMultiplier;
         headingToGoal = MathFunctions.normalizeAngle(robotState.getVectorToGoal().getTheta());
+
+        forwardCommand = driver.getLeftY();
+        strafeCommand = -driver.getLeftX();
+        turnCommand = -driver.getRightX() * 0.5;
 
         robotState.setNotMoving(
                 follower.getAngularVelocity() < 1
@@ -87,41 +84,40 @@ public class Drive extends Subsystem{
 
         // Accept vision pose if it is valid
         Pose visionPose = robotState.getVisionPose();
-        if (visionPose != null && robotState.isLimelightEnabled() &&/* robotState.isNotMoving() &&*/ !autoAim) {
+        if (visionPose != null && robotState.isLimelightEnabled() && !autoAim) {
             follower.setPose(visionPose);
+            if (robotState.isAuton()) {
+                // Only use one pose at a time if in auton
+                robotState.setLimelightEnabled(false);
+            }
         }
+
 
         robotState.setPose(follower.getPose());
 
         if (teleop) {
-            turnCommand = -driver.getRightX() * 0.75;
-            if (autoAim) {
-                if (!lastAutoAim) {
-                    double heading = MathFunctions.normalizeAngle(follower.getHeading());
-                    autoAimTarget = headingToGoal;
-                    if (heading - autoAimTarget > Math.PI) {
-                        autoAimTarget+= 2 * Math.PI;
-                    }
-                    if (autoAimTarget - heading > Math.PI) {
-                        autoAimTarget -= 2 * Math.PI;
-                    }
-                }
-//                turnCommand = autoAimController.calculate(
-//                        PoseUtils.normalizeHeading(follower.getHeading()), autoAimTarget);
-                turnCommand = rotationController.calculate(
-                        MathFunctions.normalizeAngle(follower.getHeading()), autoAimTarget);
-                if (turnCommand > 0.5) turnCommand = 0.5;
-                if (turnCommand < -0.5) turnCommand = -0.5;
+            if (autoAim && !lastAutoAim) {
+//                follower.turnTo(headingToGoal);
+                follower.holdPoint(new BezierPoint(follower.getPose()), headingToGoal, false);
+            } else if (!autoAim && lastAutoAim) {
+                follower.startTeleopDrive(true);
+            } else if (!slowMode && !autoAim) {
+                // Not slow mode
+                follower.setTeleOpDrive(
+                        forwardCommand,
+                        strafeCommand,
+                        turnCommand,
+                        robotCentric,
+                        robotCentric ? 0 : robotState.getAlliance().driverForwardHeading);
+            } else if (slowMode && !autoAim) {
+                // Slow mode
+                follower.setTeleOpDrive(
+                        forwardCommand * 0.25,
+                        strafeCommand * 0.25,
+                        turnCommand * 0.5,
+                        robotCentric,
+                        robotCentric ? 0 : robotState.getAlliance().driverForwardHeading);
             }
-
-//            turnCommand *= speedMultiplier;
-            follower.setTeleOpDrive(
-                    forwardCommand,
-                    strafeCommand,
-                    turnCommand,
-                    robotCentric,
-                    robotCentric ? 0 : robotState.getAlliance().driverForwardHeading
-            );
         }
         lastAutoAim = autoAim;
         follower.update();
@@ -135,7 +131,7 @@ public class Drive extends Subsystem{
             telemetry.addData("ForwardPower", forwardCommand);
             telemetry.addData("StrafePower", strafeCommand);
             telemetry.addData("TurnPower", turnCommand);
-            telemetry.addData("HeadingToGoal", headingToGoal);
+            telemetry.addData("HeadingToGoal", Math.toDegrees(headingToGoal));
         } else {
 //            telemetry.addData("",);
         }
@@ -155,9 +151,5 @@ public class Drive extends Subsystem{
 
     public void startAuton() {
         teleop = false;
-    }
-
-    public void setSpeed(double pct) {
-        speedMultiplier = pct;
     }
 }

@@ -16,10 +16,15 @@ public class Intake extends Subsystem {
     private final HardwareMap hwMap;
 
     private enum IntakeState {
-        IDLE,
-        WAIT,
-        INTAKE,
-        FULL
+        IDLE(0),
+        WAIT(0.4),
+        INTAKE(1.0),
+        FULL(-0.5);
+
+        public final double speed;
+        private IntakeState(double speed) {
+            this.speed = speed;
+        }
     }
 
     private IntakeState currentState = IntakeState.IDLE;
@@ -41,20 +46,7 @@ public class Intake extends Subsystem {
 
     @Override
     public void run() {
-        switch(currentState) {
-            case IDLE:
-                motor.set(0);
-                break;
-            case INTAKE:
-                motor.set(1);
-                break;
-            case WAIT:
-                motor.set(0.2);
-                break;
-            case FULL:
-                motor.set(-0.3);
-                break;
-        }
+        motor.set(currentState.speed);
 
         updateTelemetry();
     }

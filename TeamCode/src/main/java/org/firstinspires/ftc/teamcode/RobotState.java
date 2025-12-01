@@ -84,6 +84,9 @@ public class RobotState {
     @Getter @Setter
     boolean limelightEnabled = true;
 
+    @Setter
+    boolean auton = true;
+
     double lastTimeStamp = -1;
 
     public void addTelemetry(TelemetryManager telemetry) {
