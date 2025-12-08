@@ -36,7 +36,10 @@ public class GoalAutonPoses {
     public static PathChain startToLaunchObelisk;
     public static PathChain launchToRow3;
     public static PathChain row3ToLaunch;
-    public static PathChain row3ToDumpToLaunch;
+//    public static PathChain row3ToDumpToLaunch;
+    public static PathChain row3ToDump;
+    public static PathChain dumpToLaunch;
+
     public static PathChain launchToRow2;
     public static PathChain row2ToLaunch;
     public static PathChain launchToRow1;
@@ -63,7 +66,8 @@ public class GoalAutonPoses {
         afterRow2Control = new Pose(95, 60);
 
         preIntake1 = new Pose(96, 36, Math.toRadians(0));
-        row1Control = new Pose(78, 30);
+//        row1Control = new Pose(78, 30);
+        row1Control = new Pose(68, 27);
         postIntake1 = new Pose(130, 36, Math.toRadians(0));
         endPose = new Pose(100, 72, Math.toRadians(0));
 
@@ -139,21 +143,36 @@ public class GoalAutonPoses {
 //                .setHeadingInterpolation(HeadingInterpolator.facingPoint(alliance.goalPose))
 //                .build();
 
-        row3ToDumpToLaunch = follower.pathBuilder()
+        row3ToDump = follower.pathBuilder()
                 .addPath(new BezierCurve(postIntake3, row3DumpControl, dumpPose))
                 .setConstantHeadingInterpolation(dumpPose.getHeading())
                 .addParametricCallback(0.0, () -> follower.setMaxPower(0.7))
                 .addParametricCallback(1.0, () -> follower.setMaxPower(1.0))
+                .build();
+
+        dumpToLaunch = follower.pathBuilder()
                 .addPath(new BezierLine(dumpPose, launchPose))
                 .setHeadingInterpolation(HeadingInterpolator.piecewise(
                         new HeadingInterpolator.PiecewiseNode(0.0, 0.3, HeadingInterpolator.constant(dumpPose.getHeading())),
                         new HeadingInterpolator.PiecewiseNode(0.3, 1.0, HeadingInterpolator.facingPoint(alliance.goalPose))
                 )).build();
 
+
+//        row3ToDumpToLaunch = follower.pathBuilder()
+//                .addPath(new BezierCurve(postIntake3, row3DumpControl, dumpPose))
+//                .setConstantHeadingInterpolation(dumpPose.getHeading())
+//                .addParametricCallback(0.0, () -> follower.setMaxPower(0.7))
+//                .addParametricCallback(1.0, () -> follower.setMaxPower(1.0))
+//                .addPath(new BezierLine(dumpPose, launchPose))
+//                .setHeadingInterpolation(HeadingInterpolator.piecewise(
+//                        new HeadingInterpolator.PiecewiseNode(0.0, 0.3, HeadingInterpolator.constant(dumpPose.getHeading())),
+//                        new HeadingInterpolator.PiecewiseNode(0.3, 1.0, HeadingInterpolator.facingPoint(alliance.goalPose))
+//                )).build();
+
         launchToRow2 = follower.pathBuilder()
                 .addPath(new BezierCurve(launchPose, row2Control, postIntake2))
                 .setConstantHeadingInterpolation(postIntake2.getHeading())
-                .addParametricCallback(0.5, () -> follower.setMaxPower(0.3))
+                .addParametricCallback(0.4, () -> follower.setMaxPower(0.3))
                 .addParametricCallback(1.0, () -> follower.setMaxPower(1.0))
                 .build();
 
@@ -177,7 +196,7 @@ public class GoalAutonPoses {
         launchToRow1 = follower.pathBuilder()
                 .addPath(new BezierCurve(launchPose, row1Control, postIntake1))
                 .setConstantHeadingInterpolation(postIntake1.getHeading())
-                .addParametricCallback(0.6, () -> follower.setMaxPower(0.3))
+                .addParametricCallback(0.45, () -> follower.setMaxPower(0.3))
                 .build();
 
         row1ToLaunch = follower

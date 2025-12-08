@@ -99,7 +99,7 @@ public class Launcher extends Subsystem {
 //        motor1.set(Math.max(0,velocityController.calculate(currentRpm, targetRpm) + feedforward.calculate(targetRpm, motor1.getAcceleration())));
         motors.set(Math.max(0,velocityController.calculate(currentRpm, targetRpm) + feedforward.calculate(targetRpm, motor1.getAcceleration())));
 
-        robotState.setLauncherReady(Math.abs(currentRpm - targetRpm) < 50 && state != LauncherState.IDLE);
+        robotState.setLauncherReady(Math.abs(currentRpm - targetRpm) < 65 && state != LauncherState.IDLE);
         updateTelemetry();
     }
 

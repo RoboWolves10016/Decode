@@ -1,8 +1,9 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
+import static org.firstinspires.ftc.teamcode.opmodes.FarAutonPoses.cornerToLaunch;
+import static org.firstinspires.ftc.teamcode.opmodes.FarAutonPoses.launchToCorner;
 import static org.firstinspires.ftc.teamcode.opmodes.FarAutonPoses.launchToEnd;
 import static org.firstinspires.ftc.teamcode.opmodes.FarAutonPoses.launchToRow1;
-import static org.firstinspires.ftc.teamcode.opmodes.FarAutonPoses.launchToRow2;
 import static org.firstinspires.ftc.teamcode.opmodes.FarAutonPoses.row1ToLaunch;
 import static org.firstinspires.ftc.teamcode.opmodes.FarAutonPoses.row2ToLaunch;
 import static org.firstinspires.ftc.teamcode.opmodes.FarAutonPoses.startPose;
@@ -92,6 +93,7 @@ public class RedFar9P extends OpMode {
         spindexer.setFeedType(Spindexer.FeedType.PATTERN);
         spindexer.setLaunchMode();
         stateTimer.reset();
+        kicker.setShotSpacing(1.0);
     }
 
     @Override
@@ -101,15 +103,15 @@ public class RedFar9P extends OpMode {
 
         switch (autonState) {
             case 0:
+                follower.setMaxPower(0.8);
                 follower.followPath(startToLaunch);
                 advanceAutonState();
                 break;
             case 1:
                 // Go to launch position
-//                follower.followPath(startToLaunch);
                 launcher.setAuto();
-                if (!follower.isBusy() || stateTimer.seconds() > 4) {
-                    advanceAutonState();
+                if (!follower.isBusy() || stateTimer.seconds() > 2) {
+                    advanceAutonState(5);
                 }
                 break;
             case 2:
@@ -118,7 +120,7 @@ public class RedFar9P extends OpMode {
                 kicker.feed();
                 if (spindexer.isEmpty()) {
                     advanceAutonState();
-                    follower.followPath(launchToRow1);
+                    follower.followPath(launchToCorner);
                 }
                 break;
             case 3:
@@ -128,9 +130,10 @@ public class RedFar9P extends OpMode {
                 kicker.resetHistory();
                 spindexer.setIntakeMode();
 
-                if (!follower.isBusy() ||  stateTimer.seconds() > 7) {
+                if (!follower.isBusy() || spindexer.isFull() ||  stateTimer.seconds() > 10) {
                     advanceAutonState();
-                    follower.followPath(row1ToLaunch);
+                    follower.setMaxPower(0.8);
+                    follower.followPath(cornerToLaunch);
                 }
                 break;
             case 4:
@@ -138,7 +141,8 @@ public class RedFar9P extends OpMode {
                 launcher.setAuto();
 
                 if (!follower.isBusy() || stateTimer.seconds() > 3) {
-                    advanceAutonState();
+                    follower.setMaxPower(1.0);
+                    advanceAutonState(8);
                     spindexer.setFeedType(Spindexer.FeedType.PEWPEWPEW);
                     spindexer.setFeedType(Spindexer.FeedType.PATTERN);
                     spindexer.setLaunchMode();
@@ -150,7 +154,7 @@ public class RedFar9P extends OpMode {
                 kicker.feed();
                 if (spindexer.isEmpty()) {
                     advanceAutonState();
-                    follower.followPath(launchToRow2);
+                    follower.followPath(launchToRow1);
                 }
                 break;
             case 6:
@@ -162,7 +166,7 @@ public class RedFar9P extends OpMode {
 
                 if (!follower.isBusy() ||  stateTimer.seconds() > 7) {
                     advanceAutonState();
-                    follower.followPath(row2ToLaunch);
+                    follower.followPath(row1ToLaunch);
                 }
                 break;
 
@@ -171,7 +175,8 @@ public class RedFar9P extends OpMode {
                 launcher.setAuto();
 
                 if (!follower.isBusy() || stateTimer.seconds() > 3) {
-                    advanceAutonState();
+//                    advanceAutonState();
+                    advanceAutonState(2);
                     spindexer.setFeedType(Spindexer.FeedType.PEWPEWPEW);
                     spindexer.setFeedType(Spindexer.FeedType.PATTERN);
                     spindexer.setLaunchMode();

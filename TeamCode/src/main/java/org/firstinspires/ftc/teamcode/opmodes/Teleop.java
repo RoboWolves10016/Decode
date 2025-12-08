@@ -99,6 +99,8 @@ public class Teleop extends OpMode {
         // Update telemetry to panels and Driver Station
         telemetryManager.update(telemetry);
         RobotState.getInstance().setLimelightEnabled(true);
+        if (RobotState.getInstance().getPose().getX() > 96) kicker.setShotSpacing(1.0);
+        else kicker.setShotSpacing(0.5);
     }
 
     @Override

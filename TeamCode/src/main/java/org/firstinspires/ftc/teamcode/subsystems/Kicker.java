@@ -12,6 +12,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.RobotState;
 import org.firstinspires.ftc.teamcode.util.SpindexerSlot;
 
+import lombok.Setter;
+
 @Configurable
 public class Kicker extends Subsystem{
 
@@ -24,13 +26,18 @@ public class Kicker extends Subsystem{
     private ServoEx servo;
     private AbsoluteAnalogEncoder encoder;
 
-    public static final double DOWN_POSITION = 0.4;
+    public static final double DOWN_POSITION = 0.34;
     public static final double UP_POSITION = 1.0;
     public static final double SAFE_THRESHOLD = 165;
 //    public static final double SAFE_THRESHOLD = 170;
 
     public static final double TOP_THRESHOLD = 175;
     private final ElapsedTime doneKickingTimer = new ElapsedTime();
+
+    private final ElapsedTime sequenceTimer = new ElapsedTime();
+
+    @Setter
+    private double shotSpacing = 0.5;
 
     private enum KickerState {
         IDLE,
@@ -95,7 +102,7 @@ public class Kicker extends Subsystem{
         setpoint = DOWN_POSITION;
         robotState.setKickerSafe(true);
         if (feedBall && robotState.isSpindexerAlignedForLaunch() && lastKickedSlot != robotState.getCurrentSlot()
-        && robotState.isLauncherReady()) {
+        && robotState.isLauncherReady() && sequenceTimer.seconds() > shotSpacing) {
             currentState = KickerState.KICKING;
         }
     }
@@ -112,6 +119,7 @@ public class Kicker extends Subsystem{
         // State transition logic
         if (position > TOP_THRESHOLD || timer.seconds() > 0.5) {
             currentState = KickerState.RETURNING;
+            sequenceTimer.reset();
         }
     }
 
@@ -131,6 +139,7 @@ public class Kicker extends Subsystem{
         telemetry.addData("Current State", currentState);
         telemetry.addData("Want Feed", feedBall);
         telemetry.addData("Last Kicked", lastKickedSlot == null ? "None" : lastKickedSlot.toString());
+        telemetry.addData("Shot Spacing", shotSpacing);
     }
 
     @Override

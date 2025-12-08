@@ -311,6 +311,14 @@ public class Spindexer extends Subsystem {
         slot3State = BallState.EMPTY;
     }
 
+    public int getBallCount() {
+        int count = 0;
+        if (slot1State != BallState.EMPTY) ++count;
+        if (slot2State != BallState.EMPTY) ++count;
+        if (slot3State != BallState.EMPTY) ++count;
+        return count;
+    }
+
     public boolean isFull() {
         return slot1State != BallState.EMPTY
                 && slot2State != BallState.EMPTY
