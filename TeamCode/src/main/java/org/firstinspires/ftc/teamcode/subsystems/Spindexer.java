@@ -51,6 +51,7 @@ public class Spindexer extends Subsystem {
     private BallState slot3State = BallState.EMPTY;
     private BallState lastBallState = BallState.EMPTY;
     private SpindexerState state = SpindexerState.LAUNCH;
+    private SpindexerSlot lastSafeSlot = SpindexerSlot.ONE;
     private boolean ballKicked = false;
     private boolean lastBallKicked = false;
 
@@ -119,6 +120,7 @@ public class Spindexer extends Subsystem {
                         < Tuning.SPINDEXER_ALIGNED_TOLERANCE_DEG);
 
         if (robotState.isSpindexerAlignedForIntake()) {
+            lastSafeSlot = currentSlot;
             // Run color sensors before logic that checks them
             colorSensors.run();
             if (colorSensors.getCurrentStateDuration() > 0.1) {
@@ -147,6 +149,7 @@ public class Spindexer extends Subsystem {
         if (robotState.isKickerSafe()) {
             setpoint = currentSlot.launchPosition;
         }
+        if (robotState.isSpindexerAlignedForLaunch()) lastSafeSlot = currentSlot;
 
         if (robotState.isSpindexerAlignedForLaunch() && !lastBallKicked && ballKicked) {
             setSlotData(currentSlot, BallState.EMPTY);

@@ -109,7 +109,7 @@ public class Kicker extends Subsystem{
 
     private void runKicking() {
         if (lastState == KickerState.IDLE) timer.reset();
-        robotState.setKickerSafe(false);
+        robotState.setKickerSafe(position < SAFE_THRESHOLD);
         if (robotState.isSpindexerAlignedForLaunch()) {
             setpoint = UP_POSITION;
         } else {
@@ -117,7 +117,7 @@ public class Kicker extends Subsystem{
         }
 
         // State transition logic
-        if (position > TOP_THRESHOLD || timer.seconds() > 0.5) {
+        if (position > TOP_THRESHOLD/* || timer.seconds() > 0.5*/) {
             currentState = KickerState.RETURNING;
             sequenceTimer.reset();
         }

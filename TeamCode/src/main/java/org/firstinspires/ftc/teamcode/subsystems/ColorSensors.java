@@ -50,35 +50,39 @@ public class ColorSensors extends Subsystem {
 
     @Override
     public void run() {
-        NormalizedRGBA leftColors = left.getNormalizedColors();
 
-        lRed = 256 * leftColors.red;
-        lGreen = 256 * leftColors.green;
-        lBlue = 256 * leftColors.blue;
-//        lAlph = left.alpha();
         lDist = left.getDistance(DistanceUnit.MM);
 
-        NormalizedRGBA rightColors = right.getNormalizedColors();
-        rRed = 256 * rightColors.red;
-        rGreen = 256 * rightColors.green;
-        rBlue = 256 * rightColors.blue;
-//        rAlph = right.alpha();
         rDist = right.getDistance(DistanceUnit.MM);
 
         if (Double.isNaN(rDist) || rDist > 200) {
             rightState = BallState.EMPTY;
-        } else if (rGreen > rRed && rGreen > rBlue) {
-            rightState = BallState.GREEN;
         } else {
-            rightState = BallState.PURPLE;
+            NormalizedRGBA rightColors = right.getNormalizedColors();
+            rRed = 256 * rightColors.red;
+            rGreen = 256 * rightColors.green;
+            rBlue = 256 * rightColors.blue;
+
+            if (rGreen > rRed && rGreen > rBlue) {
+                rightState = BallState.GREEN;
+            } else {
+                rightState = BallState.PURPLE;
+            }
         }
 
         if (Double.isNaN(lDist) || lDist > 200) {
             leftState = BallState.EMPTY;
-        } else if (lGreen > lRed && lGreen > lBlue) {
-            leftState = BallState.GREEN;
         } else {
-            leftState = BallState.PURPLE;
+            NormalizedRGBA leftColors = left.getNormalizedColors();
+            lRed = 256 * leftColors.red;
+            lGreen = 256 * leftColors.green;
+            lBlue = 256 * leftColors.blue;
+
+            if (lGreen > lRed && lGreen > lBlue) {
+                leftState = BallState.GREEN;
+            } else {
+                leftState = BallState.PURPLE;
+            }
         }
 
         BallState newState = BallState.EMPTY;

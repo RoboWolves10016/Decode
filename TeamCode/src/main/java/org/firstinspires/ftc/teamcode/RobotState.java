@@ -45,6 +45,11 @@ public class RobotState {
         setPose(new Pose());
     }
 
+    private Pose futurePose;
+    {
+        setFuturePose(new Pose());
+    }
+
     @Setter
     private boolean kickerSafe = true;
 
@@ -56,7 +61,16 @@ public class RobotState {
 
     public void setPose(Pose pose) {
         this.pose = pose;
-        this.vectorToGoal = alliance.goalPose.minus(pose).getAsVector();
+        if (!Tuning.SHOOT_WHILE_MOVING) {
+            this.vectorToGoal = alliance.goalPose.minus(pose).getAsVector();
+        }
+    }
+
+    public void setFuturePose(Pose pose) {
+        this.futurePose = pose;
+        if (Tuning.SHOOT_WHILE_MOVING) {
+            this.vectorToGoal = alliance.goalPose.minus(pose).getAsVector();
+        }
     }
 
     private Vector vectorToGoal;
@@ -69,19 +83,19 @@ public class RobotState {
 
     @Setter
     SpindexerSlot currentSlot = SpindexerSlot.ONE;
-    @Getter @Setter
+    @Setter
     private boolean ballKicked = false;
 
-    @Getter @Setter
+    @Setter
     private boolean launcherReady = false;
 
-    @Getter @Setter
+    @Setter
     private boolean isFull = false;
 
-    @Getter @Setter
+    @Setter
     boolean headingInitialized = false;
 
-    @Getter @Setter
+    @Setter
     boolean limelightEnabled = true;
 
     @Setter
@@ -97,6 +111,7 @@ public class RobotState {
         telemetry.addData("Alliance", alliance.toString());
         telemetry.addData("Pattern", pattern.toString());
         telemetry.addData("Pose", poseToString(pose));
+        telemetry.addData("Future Pose", poseToString(futurePose));
         telemetry.addData("Goal Pose", poseToString(alliance.goalPose));
         telemetry.addData("Heading Initialized", headingInitialized);
         telemetry.addData("Use Limelight", limelightEnabled);

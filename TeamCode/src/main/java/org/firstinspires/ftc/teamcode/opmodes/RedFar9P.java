@@ -132,7 +132,7 @@ public class RedFar9P extends OpMode {
 
                 if (!follower.isBusy() || spindexer.isFull() ||  stateTimer.seconds() > 10) {
                     advanceAutonState();
-                    follower.setMaxPower(0.8);
+                    follower.setMaxPower(0.7);
                     follower.followPath(cornerToLaunch);
                 }
                 break;
@@ -177,6 +177,7 @@ public class RedFar9P extends OpMode {
                 if (!follower.isBusy() || stateTimer.seconds() > 3) {
 //                    advanceAutonState();
                     advanceAutonState(2);
+                    follower.setMaxPower(1.0);
                     spindexer.setFeedType(Spindexer.FeedType.PEWPEWPEW);
                     spindexer.setFeedType(Spindexer.FeedType.PATTERN);
                     spindexer.setLaunchMode();

@@ -37,7 +37,7 @@ public class FarAutonPoses {
         startPose = new Pose(88, 8, Math.toRadians(90));
         launchPose = new Pose(86, 21, Math.toRadians(70));
         preCornerPose = new Pose(134.5, 26, Math.toRadians(-82));
-        cornerPose = new Pose(134.5, 10, Math.toRadians(-82));
+        cornerPose = new Pose(134.5, 9, Math.toRadians(-82));
         preIntake1 = new Pose(96, 36, Math.toRadians(0));
         postIntake1 = new Pose(130, 36, Math.toRadians(0));
         preIntake2 = new Pose(96, 60, Math.toRadians(0));
@@ -82,6 +82,7 @@ public class FarAutonPoses {
         row1ToLaunch = follower.pathBuilder()
                 .addPath(new BezierLine(postIntake1, launchPose))
                 .setHeadingInterpolation(HeadingInterpolator.facingPoint(alliance.goalPose))
+                .addParametricCallback(0.8, () -> follower.setMaxPower(0.5))
                 .build();
 
         launchToCorner = follower.pathBuilder()
@@ -90,7 +91,7 @@ public class FarAutonPoses {
                 .addParametricCallback(0.8, () -> follower.setMaxPower(0.5))
                 .addPath(new BezierLine(preCornerPose, cornerPose))
                 .setLinearHeadingInterpolation(preCornerPose.getHeading(), cornerPose.getHeading())
-                .addParametricCallback(0.3, () -> follower.setMaxPower(0.2))
+                .addParametricCallback(0.1, () -> follower.setMaxPower(0.3))
                 .build();
 
         cornerToLaunch = follower.pathBuilder()

@@ -1,28 +1,36 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import static org.firstinspires.ftc.teamcode.Tuning.AIR_TIMES;
+import static org.firstinspires.ftc.teamcode.Tuning.DISTANCES_FROM_GOAL_INCHES;
+
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
+import com.pedropathing.control.PIDFCoefficients;
+import com.pedropathing.control.PIDFController;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.BezierPoint;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.math.MathFunctions;
+import com.pedropathing.math.Vector;
 import com.pedropathing.paths.HeadingInterpolator;
 import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.seattlesolvers.solverslib.controller.PIDController;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
+import com.seattlesolvers.solverslib.util.MathUtils;
 
 import org.firstinspires.ftc.teamcode.Constants;
 import org.firstinspires.ftc.teamcode.RobotState;
 import org.firstinspires.ftc.teamcode.pedropathing.Tuning;
+import org.firstinspires.ftc.teamcode.util.Interpolation;
 
 import java.util.function.Supplier;
 
 import lombok.Getter;
-import lombok.Setter;
 
 @Configurable
 public class Drive extends Subsystem{
@@ -43,21 +51,22 @@ public class Drive extends Subsystem{
     private double turnCommand = 0;
     private double headingToGoal = 0;
 
-    private Supplier<PathChain> aimPath;
     private boolean slowMode = false;
     private boolean autoAim = false;
+    private boolean shootWhileMoving = false;
     private boolean lastAutoAim = false;
+
+    public static double kP = 1.0;
+    public static double kI = 0;
+    public static double kD = 0.06;
+    public static double kF = 0.02;
+    private PIDFController aimController = new PIDFController(new PIDFCoefficients(kP, kI, kD, kF));
 
     public Drive(HardwareMap hwMap, GamepadEx driver) {
         this.telemetry = PanelsTelemetry.INSTANCE.getTelemetry();
         this.follower = Constants.createFollower(hwMap);
         this.robotState = RobotState.getInstance();
         this.driver = driver;
-
-        aimPath = () -> follower.pathBuilder()
-                .addPath(new Path(new BezierLine(follower::getPose, follower::getPose)))
-                .setHeadingInterpolation(HeadingInterpolator.facingPoint(robotState.getAlliance().goalPose))
-                .build();
     }
 
     @Override
@@ -67,10 +76,12 @@ public class Drive extends Subsystem{
 
     @Override
     public void run() {
+        aimController.setCoefficients(new PIDFCoefficients(kP, kI, kD, kF));
 
         autoAim = driver.getButton(GamepadKeys.Button.LEFT_BUMPER);
         slowMode = driver.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.1;
         robotCentric = driver.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > 0.1;
+        shootWhileMoving = driver.getButton(GamepadKeys.Button.RIGHT_BUMPER);
 
         headingToGoal = MathFunctions.normalizeAngle(robotState.getVectorToGoal().getTheta());
 
@@ -94,12 +105,41 @@ public class Drive extends Subsystem{
 
 
         robotState.setPose(follower.getPose());
+        Vector fieldVelocity = follower.getPoseTracker().getLocalizer().getVelocityVector();
+        fieldVelocity.rotateVector(follower.getHeading());
+
+        double timeGain = Interpolation.interpolate(
+                DISTANCES_FROM_GOAL_INCHES,
+                AIR_TIMES,
+                robotState.getVectorToGoal().getMagnitude());
+        robotState.setFuturePose(robotState.getPose().plus(new Pose(
+                        fieldVelocity.getXComponent() * timeGain,
+                        fieldVelocity.getYComponent() * timeGain)));
 
         if (teleop) {
-            if (autoAim && !lastAutoAim) {
-//                follower.turnTo(headingToGoal);
+            if (shootWhileMoving) {
+
+                double heading = MathFunctions.normalizeAngle(follower.getHeading());
+                double autoAimTarget = headingToGoal;
+                if (heading - autoAimTarget > Math.PI) {
+                    autoAimTarget+= 2 * Math.PI;
+                }
+                if (autoAimTarget - heading > Math.PI) {
+                    autoAimTarget -= 2 * Math.PI;
+                }
+                aimController.updatePosition(heading);
+                aimController.setTargetPosition(autoAimTarget);
+    
+                follower.setTeleOpDrive(
+                        MathUtils.clamp(forwardCommand * 0.5, -0.35, 0.35),
+                        MathUtils.clamp(strafeCommand * 0.5, -0.35, 0.35),
+                        aimController.run(),
+                        robotCentric,
+                        robotCentric ? 0 : robotState.getAlliance().driverForwardHeading);
+
+            } else if (autoAim && !lastAutoAim) {
                 follower.holdPoint(new BezierPoint(follower.getPose()), headingToGoal, false);
-            } else if (!autoAim && lastAutoAim) {
+            }else if (!autoAim && lastAutoAim) {
                 follower.startTeleopDrive(true);
             } else if (!slowMode && !autoAim) {
                 // Not slow mode

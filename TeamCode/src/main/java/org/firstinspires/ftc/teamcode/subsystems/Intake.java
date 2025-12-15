@@ -17,8 +17,9 @@ public class Intake extends Subsystem {
 
     private enum IntakeState {
         IDLE(0),
-        WAIT(0.4),
+        WAIT(0.6),
         INTAKE(1.0),
+        EXHAUST(-0.8),
         FULL(-0.5);
 
         public final double speed;
@@ -74,6 +75,10 @@ public class Intake extends Subsystem {
         } else {
             currentState = IntakeState.WAIT;
         }
+    }
+
+    public void runExhaust() {
+        currentState = IntakeState.EXHAUST;
     }
 
     public void stopIntake() {

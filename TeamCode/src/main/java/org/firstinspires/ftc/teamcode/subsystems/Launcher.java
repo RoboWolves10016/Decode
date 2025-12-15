@@ -34,6 +34,7 @@ public class Launcher extends Subsystem {
     public static boolean useManualRpm = false;
     public static double targetRpm = 0;
     private double currentRpm = 0;
+    private double currentAccel = 0;
     private double distanceToGoal = 0;
 
     public static double kP = 0.002;
@@ -91,15 +92,18 @@ public class Launcher extends Subsystem {
                 break;
         }
 
+        currentAccel = motor1.getAcceleration();
         currentRpm = (motor1.getCorrectedVelocity() / 28) * 60;
 
 //        velocityController.setPIDF(kP, kI, kD, 0);
 //        feedforward = new SimpleMotorFeedforward(kS, kV, kA);
 
-//        motor1.set(Math.max(0,velocityController.calculate(currentRpm, targetRpm) + feedforward.calculate(targetRpm, motor1.getAcceleration())));
         motors.set(Math.max(0,velocityController.calculate(currentRpm, targetRpm) + feedforward.calculate(targetRpm, motor1.getAcceleration())));
+//        motors.set(velocityController.calculate(currentRpm, targetRpm) + feedforward.calculate(targetRpm, motor1.getAcceleration()));
 
-        robotState.setLauncherReady(Math.abs(currentRpm - targetRpm) < 65 && state != LauncherState.IDLE);
+        robotState.setLauncherReady(
+                Math.abs(currentRpm - targetRpm) < 65
+                        && state != LauncherState.IDLE);
         updateTelemetry();
     }
 
@@ -108,6 +112,7 @@ public class Launcher extends Subsystem {
         telemetry.addLine("--------------LAUNCHER--------------");
         telemetry.addData("Distance to Goal", distanceToGoal);
         telemetry.addData("Current RPM", currentRpm);
+        telemetry.addData("Current Accel", currentAccel);
         telemetry.addData("Target RPM", targetRpm);
         telemetry.addData("State", state);
 
@@ -119,7 +124,7 @@ public class Launcher extends Subsystem {
     }
 
     private double distanceToRpm(double distanceInches) {
-        return Interpolation.interpolate(Tuning.DISTANCED_FROM_GOAL_INCHES, Tuning.REVOLUTIONS_PER_MINUTE, distanceInches);
+        return Interpolation.interpolate(Tuning.DISTANCES_FROM_GOAL_INCHES, Tuning.REVOLUTIONS_PER_MINUTE, distanceInches);
     }
 
     public void setAuto() {

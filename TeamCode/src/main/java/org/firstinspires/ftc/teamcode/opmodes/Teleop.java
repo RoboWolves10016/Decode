@@ -7,16 +7,9 @@ import com.pedropathing.geometry.Pose;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.util.ElapsedTime;
-import com.seattlesolvers.solverslib.command.button.Button;
-import com.seattlesolvers.solverslib.command.button.GamepadButton;
-import com.seattlesolvers.solverslib.command.button.Trigger;
-import com.seattlesolvers.solverslib.gamepad.ButtonReader;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 
-import org.firstinspires.ftc.teamcode.Constants;
-import org.firstinspires.ftc.teamcode.Robot;
 import org.firstinspires.ftc.teamcode.RobotState;
 import org.firstinspires.ftc.teamcode.subsystems.Drive;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
@@ -80,6 +73,7 @@ public class Teleop extends OpMode {
     @Override
     public void start() {
         drivetrain.startTeleop();
+        RobotState.getInstance().setLimelightEnabled(false);
     }
 
     @Override
@@ -98,9 +92,9 @@ public class Teleop extends OpMode {
 
         // Update telemetry to panels and Driver Station
         telemetryManager.update(telemetry);
-        RobotState.getInstance().setLimelightEnabled(true);
-        if (RobotState.getInstance().getPose().getX() > 96) kicker.setShotSpacing(1.0);
-        else kicker.setShotSpacing(0.5);
+
+        if (RobotState.getInstance().getPose().getY() > 96) kicker.setShotSpacing(0.5);
+        else kicker.setShotSpacing(0.25);
     }
 
     @Override
@@ -118,6 +112,8 @@ public class Teleop extends OpMode {
             intake.runIntake();
             kicker.resetHistory();
             spindexer.setIntakeMode();
+        } else if (gamepad2.left_bumper) {
+            intake.runExhaust();
         } else if (RobotState.getInstance().isLauncherReady()) {
             spindexer.setLaunchMode();
             intake.stopIntake();
@@ -125,21 +121,28 @@ public class Teleop extends OpMode {
             intake.stopIntake();
         }
 
-        if(gamepad2.right_bumper) {
-            spindexer.stepClockwise();
+        if (gamepad1.back) {
+            RobotState.getInstance().setLimelightEnabled(true);
+        } else {
+            RobotState.getInstance().setLimelightEnabled(false);
+
         }
 
-        if(gamepad2.left_bumper) {
-            spindexer.stepCounterClockwise();
-        }
+//        if(gamepad2.right_bumper) {
+//            spindexer.stepClockwise();
+//        }
+//
+//        if(gamepad2.left_bumper) {
+//            spindexer.stepCounterClockwise();
+//        }
 
         if(gamepad2.back) {
             spindexer.resetBallStates();
         }
 
-        if(gamepad1.back) {
-            RobotState.getInstance().setHeadingInitialized(false);
-        }
+//        if(gamepad1.back) {
+//            RobotState.getInstance().setHeadingInitialized(false);
+//        }
 
         if (operator.getButton(GamepadKeys.Button.Y)) {
             launcher.setAuto();

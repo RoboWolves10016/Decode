@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
-import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.dumpToLaunch;
+import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.edgeDumpToLaunch;
 import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.launchToEnd;
 import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.launchToRow1;
 import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.launchToRow2;
@@ -28,6 +28,7 @@ import org.firstinspires.ftc.teamcode.subsystems.Limelight;
 import org.firstinspires.ftc.teamcode.subsystems.Spindexer;
 import org.firstinspires.ftc.teamcode.util.Alliance;
 import org.firstinspires.ftc.teamcode.util.BallState;
+import org.firstinspires.ftc.teamcode.util.Pattern;
 import org.firstinspires.ftc.teamcode.util.SpindexerSlot;
 
 @Autonomous(name = "Blue Goal 12 D1")
@@ -71,8 +72,6 @@ public class BlueGoal12P_D1 extends OpMode {
 
         robotState.setAlliance(alliance);
         robotState.setLimelightEnabled(false);
-//        GoalAutonPoses.setAlliance(alliance);
-//        GoalAutonPoses.createPaths(follower, alliance);
         RobotState.getInstance().setAuton(true);
     }
 
@@ -112,6 +111,7 @@ public class BlueGoal12P_D1 extends OpMode {
                 launcher.setAuto();
                 if ((!follower.isBusy() && follower.getAngularVelocity() < 0.1) || stateTimer.seconds() > 4) {
                     advanceAutonState();
+                    if (robotState.getPattern() == Pattern.PGP) kicker.setShotSpacing(0.65);
                 }
                 break;
             case 2:
@@ -119,6 +119,12 @@ public class BlueGoal12P_D1 extends OpMode {
                 spindexer.setLaunchMode();
                 intake.stopIntake();
                 kicker.feed();
+                if (spindexer.getBallCount() == 2) {
+                    robotState.setLimelightEnabled(true);
+                } else {
+                    robotState.setLimelightEnabled(false);
+                }
+
                 if (spindexer.isEmpty()) {
                     advanceAutonState();
                     follower.followPath(launchToRow3);
@@ -146,7 +152,7 @@ public class BlueGoal12P_D1 extends OpMode {
                 if (!follower.isBusy() || stateTimer.seconds() > 2.25) {
                     follower.setMaxPower(1.0);
                     advanceAutonState();
-                    follower.followPath(dumpToLaunch);
+                    follower.followPath(edgeDumpToLaunch);
                 }
                 break;
             case 5:
@@ -180,7 +186,7 @@ public class BlueGoal12P_D1 extends OpMode {
                 spindexer.setIntakeMode();
                 kicker.resetHistory();
 
-                if (!follower.isBusy() || stateTimer.seconds() > 4.5 || spindexer.isFull()) {
+                if (!follower.isBusy() || stateTimer.seconds() > 4.5 || spindexer.getBallCount() == 2) {
                     advanceAutonState();
                     follower.setMaxPower(1.0);
                     follower.followPath(row2ToLaunch);
@@ -218,7 +224,7 @@ public class BlueGoal12P_D1 extends OpMode {
                 spindexer.setIntakeMode();
                 kicker.resetHistory();
 
-                if (!follower.isBusy() || stateTimer.seconds() > 5 || spindexer.isFull()) {
+                if (!follower.isBusy() || stateTimer.seconds() > 5 || spindexer.getBallCount() == 2) {
                     advanceAutonState();
                     follower.setMaxPower(1.0);
                     follower.followPath(row1ToLaunch);
@@ -247,7 +253,7 @@ public class BlueGoal12P_D1 extends OpMode {
                     follower.followPath(launchToEnd);
                 }
                 break;
-            case 15:
+            case 14:
                 // Move off line to in front of gate
                 if (!follower.isBusy()) {
                     // Do Nothing

@@ -9,11 +9,11 @@ import com.pedropathing.geometry.Pose;
 public enum Alliance {
     RED(
             0,
-            new Pose(144 - 10, 144 - 9)
+            new Pose(144 - 12, 144 - 9)
     ),
     BLUE(
             Math.PI,
-            new Pose(10, 144 - 9)
+            new Pose(12, 144 - 9)
     );
 
     public final double driverForwardHeading;
