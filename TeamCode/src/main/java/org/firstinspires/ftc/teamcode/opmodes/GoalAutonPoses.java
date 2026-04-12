@@ -59,7 +59,7 @@ public class GoalAutonPoses {
 
         sidewaysStartPose = new Pose(126, 123, Math.toRadians(125.3));
 //        launchPose = new Pose(96, 96, Math.toRadians(50));
-        launchPose = new Pose(96, 90, Math.toRadians(50));
+        launchPose = new Pose(88, 82, Math.toRadians(50));
         endLaunchPose = new Pose(89, 105);
         edgeDumpPose = new Pose(129, 77, Math.toRadians(90));
         centerDumpPose = new Pose(129, 71, Math.toRadians(90));

@@ -15,6 +15,7 @@ public class FarAutonPoses {
 
     public static Pose preCornerPose;
     public static Pose cornerPose;
+    public static Pose straightCornerPose;
     public static Pose preIntake1;
     public static Pose postIntake1;
     public static Pose preIntake2;
@@ -26,6 +27,7 @@ public class FarAutonPoses {
     public static PathChain launchToRow1;
     public static PathChain row1ToLaunch;
     public static PathChain launchToCorner;
+    public static PathChain launchToCornerStraight;
     public static PathChain cornerToLaunch;
 
     public static PathChain launchToRow2;
@@ -36,8 +38,9 @@ public class FarAutonPoses {
     public static void setAlliance(Alliance alliance) {
         startPose = new Pose(88, 8, Math.toRadians(90));
         launchPose = new Pose(86, 21, Math.toRadians(70));
-        preCornerPose = new Pose(134.5, 26, Math.toRadians(-82));
+        preCornerPose = new Pose(131, 26, Math.toRadians(-82));
         cornerPose = new Pose(134.5, 9, Math.toRadians(-82));
+        straightCornerPose = new Pose(134, 8, Math.toRadians(0));
         preIntake1 = new Pose(96, 36, Math.toRadians(0));
         postIntake1 = new Pose(130, 36, Math.toRadians(0));
         preIntake2 = new Pose(96, 60, Math.toRadians(0));
@@ -49,6 +52,7 @@ public class FarAutonPoses {
             launchPose = launchPose.mirror();
 
             preCornerPose = preCornerPose.mirror();
+            straightCornerPose = straightCornerPose.mirror();
             cornerPose = cornerPose.mirror();
 
             preIntake1 = preIntake1.mirror();
@@ -88,14 +92,22 @@ public class FarAutonPoses {
         launchToCorner = follower.pathBuilder()
                 .addPath(new BezierLine(launchPose, preCornerPose))
                 .setLinearHeadingInterpolation(launchPose.getHeading(), preCornerPose.getHeading())
-                .addParametricCallback(0.8, () -> follower.setMaxPower(0.5))
+//                .addParametricCallback(0.8, () -> follower.setMaxPower(0.5))
                 .addPath(new BezierLine(preCornerPose, cornerPose))
                 .setLinearHeadingInterpolation(preCornerPose.getHeading(), cornerPose.getHeading())
-                .addParametricCallback(0.1, () -> follower.setMaxPower(0.3))
+//                .addParametricCallback(0.1, () -> follower.setMaxPower(0.3))
+                .addParametricCallback(0.1, () -> follower.setMaxPower(0.5))
+                .build();
+
+        launchToCornerStraight = follower.pathBuilder()
+                .addPath(new BezierLine(launchPose, straightCornerPose))
+                .setConstantHeadingInterpolation(straightCornerPose.getHeading())
+                .addParametricCallback(0.1, () -> follower.setMaxPower(0.7))
                 .build();
 
         cornerToLaunch = follower.pathBuilder()
                 .addPath(new BezierLine(cornerPose, launchPose))
+                .addParametricCallback(0.01, () -> follower.setMaxPower(1.0))
                 .setHeadingInterpolation(HeadingInterpolator.piecewise(
                         new HeadingInterpolator.PiecewiseNode(
                                 0.0,

@@ -17,6 +17,7 @@ apply from: '../build.dependencies.gradle'
 
 android {
     namespace = 'org.firstinspires.ftc.teamcode'
+    buildToolsVersion '34.0.0'
 
     packagingOptions {
         jniLibs.useLegacyPackaging true
@@ -25,10 +26,10 @@ android {
 
 dependencies {
     implementation project(':FtcRobotController')
-    implementation "org.solverslib:core:SNAPSHOT-7cdcc66" // core
-    implementation "org.solverslib:pedroPathing:SNAPSHOT-7cdcc66" // pedroPathing
-    compileOnly("org.projectlombok:lombok:1.18.42")
-    annotationProcessor("org.projectlombok:lombok:1.18.42")
+    implementation "org.solverslib:core:0.3.4" // core
+    implementation "org.solverslib:pedroPathing:0.3.4" // pedroPathing
+    compileOnly("org.projectlombok:lombok:1.18.44")
+    annotationProcessor("org.projectlombok:lombok:1.18.44")
 
 }
 

@@ -28,8 +28,6 @@ import org.firstinspires.ftc.teamcode.RobotState;
 import org.firstinspires.ftc.teamcode.pedropathing.Tuning;
 import org.firstinspires.ftc.teamcode.util.Interpolation;
 
-import java.util.function.Supplier;
-
 import lombok.Getter;
 
 @Configurable
@@ -87,7 +85,7 @@ public class Drive extends Subsystem{
 
         forwardCommand = driver.getLeftY();
         strafeCommand = -driver.getLeftX();
-        turnCommand = -driver.getRightX() * 0.5;
+        turnCommand = -driver.getRightX() * 0.77;
 
         robotState.setNotMoving(
                 follower.getAngularVelocity() < 1

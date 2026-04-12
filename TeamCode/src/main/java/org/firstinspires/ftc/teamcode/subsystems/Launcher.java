@@ -14,6 +14,7 @@ import com.seattlesolvers.solverslib.controller.wpilibcontroller.SimpleMotorFeed
 import com.seattlesolvers.solverslib.hardware.motors.Motor;
 import com.seattlesolvers.solverslib.hardware.motors.MotorEx;
 import com.seattlesolvers.solverslib.hardware.motors.MotorGroup;
+import com.seattlesolvers.solverslib.util.MathUtils;
 
 @Configurable
 public class Launcher extends Subsystem {
@@ -95,11 +96,10 @@ public class Launcher extends Subsystem {
         currentAccel = motor1.getAcceleration();
         currentRpm = (motor1.getCorrectedVelocity() / 28) * 60;
 
-//        velocityController.setPIDF(kP, kI, kD, 0);
-//        feedforward = new SimpleMotorFeedforward(kS, kV, kA);
 
-        motors.set(Math.max(0,velocityController.calculate(currentRpm, targetRpm) + feedforward.calculate(targetRpm, motor1.getAcceleration())));
-//        motors.set(velocityController.calculate(currentRpm, targetRpm) + feedforward.calculate(targetRpm, motor1.getAcceleration()));
+        double output = MathUtils.clamp(velocityController.calculate(currentRpm, targetRpm) + feedforward.calculate(targetRpm, motor1.getAcceleration()), 0.0, 1.0);
+        telemetry.addData("MotorOutput", output);
+        motors.set(output);
 
         robotState.setLauncherReady(
                 Math.abs(currentRpm - targetRpm) < 65
