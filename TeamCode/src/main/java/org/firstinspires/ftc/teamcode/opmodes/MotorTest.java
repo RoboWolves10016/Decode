@@ -5,7 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
-@TeleOp(name="Motor Wiring Test")
+@TeleOp(name="Motor Wiring Test", group="Test")
 public class MotorTest extends OpMode {
 
     private DcMotorEx wheel1;

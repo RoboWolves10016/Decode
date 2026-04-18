@@ -1,12 +1,12 @@
-package org.firstinspires.ftc.teamcode.opmodes;
+package org.firstinspires.ftc.teamcode.opmodes.auton;
 
-import static org.firstinspires.ftc.teamcode.opmodes.FarAutonPoses.cornerToLaunch;
-import static org.firstinspires.ftc.teamcode.opmodes.FarAutonPoses.launchToCorner;
-import static org.firstinspires.ftc.teamcode.opmodes.FarAutonPoses.launchToEnd;
-import static org.firstinspires.ftc.teamcode.opmodes.FarAutonPoses.launchToRow1;
-import static org.firstinspires.ftc.teamcode.opmodes.FarAutonPoses.row1ToLaunch;
-import static org.firstinspires.ftc.teamcode.opmodes.FarAutonPoses.startPose;
-import static org.firstinspires.ftc.teamcode.opmodes.FarAutonPoses.startToLaunch;
+import static org.firstinspires.ftc.teamcode.opmodes.auton.FarAutonPoses.cornerToLaunch;
+import static org.firstinspires.ftc.teamcode.opmodes.auton.FarAutonPoses.launchToCorner;
+import static org.firstinspires.ftc.teamcode.opmodes.auton.FarAutonPoses.launchToEnd;
+import static org.firstinspires.ftc.teamcode.opmodes.auton.FarAutonPoses.launchToRow1;
+import static org.firstinspires.ftc.teamcode.opmodes.auton.FarAutonPoses.row1ToLaunch;
+import static org.firstinspires.ftc.teamcode.opmodes.auton.FarAutonPoses.startPose;
+import static org.firstinspires.ftc.teamcode.opmodes.auton.FarAutonPoses.startToLaunch;
 
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;

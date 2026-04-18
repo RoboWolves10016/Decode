@@ -1,14 +1,14 @@
-package org.firstinspires.ftc.teamcode.opmodes;
+package org.firstinspires.ftc.teamcode.opmodes.auton;
 
-import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.edgeDumpToLaunch;
-import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.launchToEnd;
-import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.launchToRow1;
-import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.launchToRow2;
-import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.launchToRow3;
-import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.row1ToLaunch;
-import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.row2ToLaunch;
-import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.row3ToDump;
-import static org.firstinspires.ftc.teamcode.opmodes.GoalAutonPoses.startToLaunchObelisk;
+import static org.firstinspires.ftc.teamcode.opmodes.auton.GoalAutonPoses.edgeDumpToLaunch;
+import static org.firstinspires.ftc.teamcode.opmodes.auton.GoalAutonPoses.launchToEnd;
+import static org.firstinspires.ftc.teamcode.opmodes.auton.GoalAutonPoses.launchToRow1;
+import static org.firstinspires.ftc.teamcode.opmodes.auton.GoalAutonPoses.launchToRow2;
+import static org.firstinspires.ftc.teamcode.opmodes.auton.GoalAutonPoses.launchToRow3;
+import static org.firstinspires.ftc.teamcode.opmodes.auton.GoalAutonPoses.row1ToLaunch;
+import static org.firstinspires.ftc.teamcode.opmodes.auton.GoalAutonPoses.row2ToLaunch;
+import static org.firstinspires.ftc.teamcode.opmodes.auton.GoalAutonPoses.row3ToDump;
+import static org.firstinspires.ftc.teamcode.opmodes.auton.GoalAutonPoses.startToLaunchObelisk;
 
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;

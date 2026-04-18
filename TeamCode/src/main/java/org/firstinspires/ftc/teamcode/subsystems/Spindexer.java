@@ -151,7 +151,7 @@ public class Spindexer extends Subsystem {
         }
         if (robotState.isSpindexerAlignedForLaunch()) lastSafeSlot = currentSlot;
 
-        if (robotState.isSpindexerAlignedForLaunch() && !lastBallKicked && ballKicked) {
+        if (robotState.isSpindexerAlignedForLaunch() && /*!lastBallKicked &&*/ ballKicked && robotState.isKickerSafe()) {
             setSlotData(currentSlot, BallState.EMPTY);
             if (feedType == FeedType.PATTERN) {
                 patternIndex += 1;

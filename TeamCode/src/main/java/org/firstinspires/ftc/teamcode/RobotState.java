@@ -119,6 +119,7 @@ public class RobotState {
         telemetry.addData("Vector to Goal", vectorToGoal == null ? "None" : vectorToString(vectorToGoal));
         telemetry.addData("Distance to Goal", vectorToGoal == null ? "None" : vectorToGoal.getMagnitude());
         telemetry.addData("Is Kicker Safe?", kickerSafe);
+        telemetry.addData("Is Ball Kicked?", ballKicked);
         telemetry.addData("SpindexerAlignedLaunch", spindexerAlignedForLaunch);
         telemetry.addData("SpindexerAlignedIntake", spindexerAlignedForIntake);
         telemetry.addData("LauncherReady", launcherReady);

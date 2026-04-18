@@ -2,13 +2,12 @@ package org.firstinspires.ftc.teamcode.opmodes;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.seattlesolvers.solverslib.hardware.AbsoluteAnalogEncoder;
 import com.seattlesolvers.solverslib.hardware.servos.ServoEx;
 import com.seattlesolvers.solverslib.hardware.servos.ServoExGroup;
 import com.seattlesolvers.solverslib.util.MathUtils;
 
-@TeleOp(name="Servo Test")
-public class ServoTest extends OpMode {
+@TeleOp(name="Turret Servo Test", group="Test")
+public class TurretServoTest extends OpMode {
     ServoEx servo1;
     ServoEx servo2;
     ServoExGroup servos;

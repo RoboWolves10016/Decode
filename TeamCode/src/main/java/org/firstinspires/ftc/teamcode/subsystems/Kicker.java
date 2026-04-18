@@ -26,12 +26,14 @@ public class Kicker extends Subsystem{
     private ServoEx servo;
     private AbsoluteAnalogEncoder encoder;
 
-    public static final double DOWN_POSITION = 0.34;
-    public static final double UP_POSITION = 1.0;
-    public static final double SAFE_THRESHOLD = 165;
+    public static final double DOWN_POSITION = 0.815;
+    public static final double UP_POSITION = 0.72;
+    public static final double Uptime = 0.15;
+    public static final double Downtime = 0.25;
+//    public static final double SAFE_THRESHOLD = 165;
 //    public static final double SAFE_THRESHOLD = 170;
 
-    public static final double TOP_THRESHOLD = 175;
+//    public static final double TOP_THRESHOLD = 175;
     private final ElapsedTime doneKickingTimer = new ElapsedTime();
 
     private final ElapsedTime sequenceTimer = new ElapsedTime();
@@ -75,7 +77,8 @@ public class Kicker extends Subsystem{
     public void run() {
         position = encoder.getCurrentPosition();
 
-        robotState.setKickerSafe(position < SAFE_THRESHOLD && currentState == KickerState.IDLE);
+//        robotState.setKickerSafe(/*position < SAFE_THRESHOLD && */currentState == KickerState.IDLE);
+        robotState.setBallKicked(false);
 
         // State transition logic
         switch (currentState) {
@@ -90,7 +93,7 @@ public class Kicker extends Subsystem{
                 break;
         }
 
-        robotState.setBallKicked(currentState == KickerState.RETURNING);
+//        robotState.setBallKicked(lastState == KickerState.RETURNING && currentState == KickerState.IDLE);
         if (currentState == KickerState.RETURNING && lastState == KickerState.KICKING) doneKickingTimer.reset();
 
         lastState = currentState;
@@ -104,12 +107,12 @@ public class Kicker extends Subsystem{
         if (feedBall && robotState.isSpindexerAlignedForLaunch() && lastKickedSlot != robotState.getCurrentSlot()
         && robotState.isLauncherReady() && sequenceTimer.seconds() > 0) {
             currentState = KickerState.KICKING;
+            timer.reset();
         }
     }
 
     private void runKicking() {
-        if (lastState == KickerState.IDLE) timer.reset();
-        robotState.setKickerSafe(position < SAFE_THRESHOLD);
+        robotState.setKickerSafe(false);
         if (robotState.isSpindexerAlignedForLaunch()) {
             setpoint = UP_POSITION;
         } else {
@@ -117,9 +120,10 @@ public class Kicker extends Subsystem{
         }
 
         // State transition logic
-        if (position > TOP_THRESHOLD/* || timer.seconds() > 0.5*/) {
+        if (/*position > TOP_THRESHOLD || */timer.seconds() > Uptime) {
             currentState = KickerState.RETURNING;
             sequenceTimer.reset();
+            lastKickedSlot = robotState.getCurrentSlot();
         }
     }
 
@@ -127,7 +131,12 @@ public class Kicker extends Subsystem{
         robotState.setKickerSafe(false);
         stopFeed();
         setpoint = DOWN_POSITION;
-        if (position < SAFE_THRESHOLD) currentState = KickerState.IDLE;
+        if (timer.seconds() > Downtime) {
+            currentState = KickerState.IDLE;
+            timer.reset();
+            robotState.setBallKicked(true);
+            robotState.setKickerSafe(true);
+        }
     }
 
 
@@ -140,6 +149,7 @@ public class Kicker extends Subsystem{
         telemetry.addData("Want Feed", feedBall);
         telemetry.addData("Last Kicked", lastKickedSlot == null ? "None" : lastKickedSlot.toString());
         telemetry.addData("Shot Spacing", shotSpacing);
+        telemetry.addData("StateTimer", timer.seconds());
     }
 
     @Override

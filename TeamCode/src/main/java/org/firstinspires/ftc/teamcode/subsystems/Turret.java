@@ -13,11 +13,11 @@ import org.firstinspires.ftc.teamcode.RobotState;
 public class Turret extends Subsystem{
 
     private static final double GEARBOX_RATIO = (40d / 20d) * (48d / 20d);
-    private static final double TURRET_RATIO = GEARBOX_RATIO * (22d / 101);
-    private static final double MAX_ANGLE = TURRET_RATIO * 180;
+    private static final double TURRET_RATIO = GEARBOX_RATIO * (22d / 101d);
+    private static final double MAX_ANGLE = TURRET_RATIO * 360d;
     private static final double MIN_POS = 0.0;
     private static final double MAX_POS = 1.0;
-    private static final double IDLE_POS = 0.5;
+    private static final double CENTER_POS = 0.5;
 
     // Required subsystem components
     private final TelemetryManager telemetry;
@@ -55,6 +55,8 @@ public class Turret extends Subsystem{
 
         turretServos = new ServoExGroup(servo1, servo2);
         turretServos.setCachingTolerance(0.005);
+
+        // Configure such that increasing the position rotates the turret counterclockwise
         turretServos.setInverted(true);
     }
 
@@ -69,11 +71,11 @@ public class Turret extends Subsystem{
             if (angleToGoal < -Math.PI) angleToGoal += 2 * Math.PI;
         }
 
-        double targetPos = convertDegreesToServoPos(Math.toDegrees(angleToGoal));
+        double targetPos = radiansToPos(Math.toDegrees(angleToGoal));
 
         switch (currentState) {
             case IDLE:
-                servoTarget = IDLE_POS;
+                servoTarget = CENTER_POS;
                 break;
             case AIMING:
                 servoTarget = targetPos;
@@ -94,15 +96,16 @@ public class Turret extends Subsystem{
     void stop() {
     }
 
-    public static double convertDegreesToServoPos(double degrees) {
-        if (Double.isNaN(degrees)) {
+    // Provided radians should already be normalized between -pi and pi
+    public static double radiansToPos(double radians) {
+        if (Double.isNaN(radians)) {
             return Double.NaN;
         }
 
-        return 0;
+        return 0.5 + 0.5;
     }
 
-    public static double convertServoPoseToDegrees(double pos) {
+    public static double posToRadians(double pos) {
         if (Double.isNaN(pos)) {
             return Double.NaN;
         }

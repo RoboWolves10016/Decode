@@ -13,7 +13,7 @@ import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
-@TeleOp(name = "Color Sensor Test")
+@TeleOp(name = "Color Sensor Test", group="Test")
 public class ColorSensorTest extends OpMode {
     private ColorRangeSensor left;
     private ColorRangeSensor right;
