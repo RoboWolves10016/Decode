@@ -85,7 +85,7 @@ public class Drive extends Subsystem{
 
         forwardCommand = driver.getLeftY();
         strafeCommand = -driver.getLeftX();
-        turnCommand = -driver.getRightX() * 0.77;
+        turnCommand = -driver.getRightX() * 0.85;
 
         robotState.setNotMoving(
                 follower.getAngularVelocity() < 1
