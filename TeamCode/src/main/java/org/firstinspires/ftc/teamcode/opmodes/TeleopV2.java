@@ -2,8 +2,8 @@ package org.firstinspires.ftc.teamcode.opmodes;
 
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
+import com.pedropathing.drivetrain.Drivetrain;
 import com.qualcomm.hardware.lynx.LynxModule;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
@@ -16,22 +16,20 @@ import org.firstinspires.ftc.teamcode.util.Alliance;
 
 import java.util.List;
 
-@Disabled
-@TeleOp(name = "TeleOp", group = "Competition")
-public class Teleop extends OpMode {
-
+@TeleOp(name="Teleop V2", group="Competition")
+public class TeleopV2 extends OpMode {
     // These two static variables will be set in the stop() method of any auton OpMode ran before this.
     private final TelemetryManager telemetryManager = PanelsTelemetry.INSTANCE.getTelemetry();
-    private Drive drivetrain;
-//    private Limelight limelight;
-    private Intake intake;
 
     private GamepadEx driver;
     private GamepadEx operator;
 
+    // Subsystems
+    private Drive drivetrain;
+    private Intake intake;
+
     @Override
     public void init() {
-
         List<LynxModule> hubs = hardwareMap.getAll(LynxModule.class);
         for (int i = 0; i < hubs.size(); ++i) {
             hubs.get(i).setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
@@ -50,27 +48,6 @@ public class Teleop extends OpMode {
     }
 
     @Override
-    public void start() {
-        drivetrain.startTeleop();
-        RobotState.getInstance().setLimelightEnabled(false);
-    }
-
-    @Override
-    public void loop() {
-        RobotState.getInstance().addTelemetry(telemetryManager);
-        processInputs();
-        // Loop each subsystem besides follower here
-        intake.run();
-//        limelight.run();
-
-        drivetrain.run();
-
-        // Update telemetry to panels and Driver Station
-        telemetryManager.update(telemetry);
-
-    }
-
-    @Override
     public void init_loop() {
         if (driver.getButton(GamepadKeys.Button.B)) RobotState.getInstance().setAlliance(Alliance.RED);
         if (driver.getButton(GamepadKeys.Button.X)) RobotState.getInstance().setAlliance(Alliance.BLUE);
@@ -80,23 +57,31 @@ public class Teleop extends OpMode {
         telemetryManager.update(telemetry);
     }
 
-    private void processInputs() {
-        if (gamepad2.left_trigger > 0.1)  {
-            intake.runIntake();
-        } else if (gamepad2.left_bumper) {
-            intake.runExhaust();
-        } else if (RobotState.getInstance().isLauncherReady()) {
-            intake.stopIntake();
-        } else {
-            intake.stopIntake();
-        }
-
-        RobotState.getInstance().setLimelightEnabled(gamepad1.back);
-
+    @Override
+    public void start() {
+        drivetrain.startTeleop();
+        RobotState.getInstance().setLimelightEnabled(false);
     }
 
     @Override
-    public void stop() {
-//        limelight.stop();
+    public void loop() {
+        RobotState.getInstance().addTelemetry(telemetryManager);
+
+        processInputs();
+
+        drivetrain.run();
+        intake.run();
+
+        // Update telemetry to panels and Driver Station
+        telemetryManager.update(telemetry);
+    }
+
+    private void processInputs() {
+        if (operator.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > 0.1) intake.runIntake();
+        else intake.stopIntake();
+
+        if (operator.wasJustPressed(GamepadKeys.Button.DPAD_UP)) intake.tweakUp();
+        if (operator.wasJustPressed(GamepadKeys.Button.DPAD_DOWN)) intake.tweakDown();
+
     }
 }

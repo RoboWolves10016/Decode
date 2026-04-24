@@ -15,10 +15,10 @@ public class MotorTest extends OpMode {
 
     @Override
     public void init() {
-        wheel1 = hardwareMap.get(DcMotorEx.class, "Wheel1");
-        wheel2 = hardwareMap.get(DcMotorEx.class, "Wheel2");
-        wheel3 = hardwareMap.get(DcMotorEx.class, "Wheel3");
-        wheel4 = hardwareMap.get(DcMotorEx.class, "Wheel4");
+        wheel1 = hardwareMap.get(DcMotorEx.class, "fl");
+        wheel2 = hardwareMap.get(DcMotorEx.class, "fr");
+        wheel3 = hardwareMap.get(DcMotorEx.class, "bl");
+        wheel4 = hardwareMap.get(DcMotorEx.class, "br");
         telemetry.addData("D-Pad Up", "Wheel1");
         telemetry.addData("D-Pad Right", "Wheel2");
         telemetry.addData("D-Pad Down", "Wheel3");

@@ -50,15 +50,6 @@ public class RobotState {
         setFuturePose(new Pose());
     }
 
-    @Setter
-    private boolean kickerSafe = true;
-
-    @Setter
-    private boolean spindexerAlignedForLaunch = false;
-
-    @Setter
-    private boolean spindexerAlignedForIntake = false;
-
     public void setPose(Pose pose) {
         this.pose = pose;
         if (!Tuning.SHOOT_WHILE_MOVING) {
@@ -81,10 +72,6 @@ public class RobotState {
     @Setter
     private boolean notMoving = true;
 
-    @Setter
-    SpindexerSlot currentSlot = SpindexerSlot.ONE;
-    @Setter
-    private boolean ballKicked = false;
 
     @Setter
     private boolean launcherReady = false;
@@ -118,10 +105,6 @@ public class RobotState {
         telemetry.addData("Vision Pose", visionPose == null ? "None" : poseToString(visionPose));
         telemetry.addData("Vector to Goal", vectorToGoal == null ? "None" : vectorToString(vectorToGoal));
         telemetry.addData("Distance to Goal", vectorToGoal == null ? "None" : vectorToGoal.getMagnitude());
-        telemetry.addData("Is Kicker Safe?", kickerSafe);
-        telemetry.addData("Is Ball Kicked?", ballKicked);
-        telemetry.addData("SpindexerAlignedLaunch", spindexerAlignedForLaunch);
-        telemetry.addData("SpindexerAlignedIntake", spindexerAlignedForIntake);
         telemetry.addData("LauncherReady", launcherReady);
     }
 }

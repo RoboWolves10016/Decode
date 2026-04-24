@@ -17,7 +17,7 @@ import com.seattlesolvers.solverslib.hardware.motors.MotorGroup;
 import com.seattlesolvers.solverslib.util.MathUtils;
 
 @Configurable
-public class Launcher extends Subsystem {
+public class Flywheel extends Subsystem {
 
     // Required subsystem components
     private final TelemetryManager telemetry;
@@ -53,7 +53,7 @@ public class Launcher extends Subsystem {
 
     private LauncherState state = LauncherState.IDLE;
 
-    public Launcher(HardwareMap hwMap) {
+    public Flywheel(HardwareMap hwMap) {
         this.hwMap = hwMap;
         telemetry = PanelsTelemetry.INSTANCE.getTelemetry();
     }
