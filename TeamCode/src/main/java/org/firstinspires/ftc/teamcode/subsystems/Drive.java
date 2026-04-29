@@ -91,6 +91,8 @@ public class Drive extends Subsystem{
                 follower.getAngularVelocity() < 1
                         && follower.getTeleopDriveVector().getMagnitude() < 1);
 
+        robotState.setAngularVelocity(follower.getAngularVelocity());
+
         // Accept vision pose if it is valid
         Pose visionPose = robotState.getVisionPose();
         if (visionPose != null && robotState.isLimelightEnabled() && !autoAim) {
@@ -117,7 +119,7 @@ public class Drive extends Subsystem{
         if (teleop) {
             if (shootWhileMoving) {
 
-                double heading = MathFunctions.normalizeAngle(follower.getHeading());
+                double heading = MathFunctions.normalizeAngle(follower.getHeading() + Math.PI);
                 double autoAimTarget = headingToGoal;
                 if (heading - autoAimTarget > Math.PI) {
                     autoAimTarget+= 2 * Math.PI;

@@ -42,7 +42,7 @@ public class Limelight extends Subsystem {
 
     @Override
     public void init() {
-        limelight = hwMap.get(Limelight3A.class, "limelight");
+        limelight = hwMap.get(Limelight3A.class, "Limelight");
         limelight.pipelineSwitch(0);
         limelight.start();
         timeSinceLastPose.reset();

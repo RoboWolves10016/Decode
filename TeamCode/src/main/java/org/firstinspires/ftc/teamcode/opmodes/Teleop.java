@@ -82,13 +82,13 @@ public class Teleop extends OpMode {
 
     private void processInputs() {
         if (gamepad2.left_trigger > 0.1)  {
-            intake.runIntake();
+//            intake.set();
         } else if (gamepad2.left_bumper) {
-            intake.runExhaust();
+//            intake.runExhaust();
         } else if (RobotState.getInstance().isLauncherReady()) {
-            intake.stopIntake();
+//            intake.stopIntake();
         } else {
-            intake.stopIntake();
+//            intake.stopIntake();
         }
 
         RobotState.getInstance().setLimelightEnabled(gamepad1.back);

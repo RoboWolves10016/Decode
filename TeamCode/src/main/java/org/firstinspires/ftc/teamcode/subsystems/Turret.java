@@ -1,18 +1,25 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
-import static org.firstinspires.ftc.teamcode.subsystems.ShooterConstants.*;
+import static org.firstinspires.ftc.teamcode.subsystems.LauncherConstants.*;
 
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.seattlesolvers.solverslib.hardware.AbsoluteAnalogEncoder;
 import com.seattlesolvers.solverslib.hardware.servos.ServoEx;
 import com.seattlesolvers.solverslib.hardware.servos.ServoExGroup;
+import com.seattlesolvers.solverslib.util.MathUtils;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.Constants;
 import org.firstinspires.ftc.teamcode.RobotState;
+import org.firstinspires.ftc.teamcode.Tuning;
+
+import lombok.Setter;
 
 @Configurable
-public class Turret extends Subsystem{
+public class Turret extends Subsystem {
 
     private static final double GEARBOX_RATIO = (40d / 20d) * (48d / 20d);
     private static final double TURRET_RATIO = GEARBOX_RATIO * (22d / 101d);
@@ -27,14 +34,16 @@ public class Turret extends Subsystem{
 
     private double angleToGoal = 0;
     private double targetAngle = 0;
-    private double servoTarget = 0;
-//    private double servoAngle = 0;
+    private double angleTarget = 0;
+    private double encoderAngle = 0;
 
     private ServoExGroup turretServos;
     private ServoEx servo1;
     private ServoEx servo2;
-//    private AbsoluteAnalogEncoder servo1Encoder;
+    private AbsoluteAnalogEncoder encoder;
 
+    @Setter
+    private boolean tracking = false;
 
     private enum TurretState {
         AIMING,
@@ -53,41 +62,53 @@ public class Turret extends Subsystem{
         servo1 = new ServoEx(hwMap, "Turret1");
         servo2 = new ServoEx(hwMap, "Turret2");
 
-//        servo1Encoder = new AbsoluteAnalogEncoder(hwMap, "TurretServo1Encoder", 3.3, AngleUnit.DEGREES);
+        encoder = new AbsoluteAnalogEncoder(hwMap, "TurretAnalog", 3.3, AngleUnit.DEGREES);
 
         turretServos = new ServoExGroup(servo1, servo2);
-        turretServos.setCachingTolerance(
-                CENTER_POS - radiansToPos(CENTER_ANGLE - Math.toRadians(TURRET_CACHING_TOL_DEG))
-        );
+        turretServos.setCachingTolerance(0.0001);
+        servo1.getServo().getController().pwmEnable();
+        servo2.getServo().getController().pwmEnable();
     }
 
     @Override
     public void run() {
-//        servoAngle = servo1Encoder.getCurrentPosition();
-        angleToGoal = robotState.getVectorToGoal().getTheta() - robotState.getPose().getHeading();
-
-        // The following loop ensures that whatever angle we use is between -180 and 180 degrees
-        while (angleToGoal < -ShooterConstants.MIN_ANGLE_LIMIT || angleToGoal > ShooterConstants.MAX_ANGLE_LIMIT) {
-            if (angleToGoal > Math.PI) angleToGoal -= 2 * Math.PI;
-            if (angleToGoal < -Math.PI) angleToGoal += 2 * Math.PI;
-        }
+        encoderAngle = (-encoder.getCurrentPosition() * TURRET_RATIO) + 194;
+        if (tracking) currentState = TurretState.AIMING;
+        else currentState = TurretState.IDLE;
+        if (Tuning.SHOOT_WHILE_MOVING)
+            angleToGoal = robotState.getFutureVectorToGoal().getTheta() - robotState.getPose().getHeading() + Math.PI;
+        else
+            angleToGoal = robotState.getVectorToGoal().getTheta() - robotState.getPose().getHeading() + Math.PI;
 
         switch (currentState) {
             case IDLE:
-                targetAngle = CENTER_ANGLE;
-                servoTarget = CENTER_POS;
+                targetAngle = 0;
                 break;
             case AIMING:
-                targetAngle = angleToGoal;
-                servoTarget = radiansToPos(angleToGoal);
+                targetAngle = Math.toDegrees(MathUtils.normalizeAngle(angleToGoal, false, AngleUnit.RADIANS));
                 break;
         }
+
         if (useManualOverride) {
-            targetAngle = manualOverrideDegrees;
-            servoTarget = radiansToPos(Math.toRadians(manualOverrideDegrees));
+            angleTarget = manualOverrideDegrees;
+        } else {
+            angleTarget = targetAngle;
         }
 
-        turretServos.set(servoTarget);
+        angleTarget -= TURRET_ROT_FF * robotState.getAngularVelocity();
+
+        angleTarget = MathUtils.clamp(angleTarget, MIN_TURRET_ANGLE_LIMIT, MAX_TURRET_ANGLE_LIMIT);
+
+        // Prevent limit wraparounds
+        if (angleTarget > 0 && encoderAngle < 0 && Math.abs(angleTarget - encoderAngle) > 200) {
+            angleTarget = -20;
+        }
+
+        if (angleTarget < 0 && encoderAngle > 0 && Math.abs(angleTarget - encoderAngle) > 200) {
+            angleTarget = 20;
+        }
+
+        turretServos.set(angleToPos(angleTarget));
         updateTelemetry();
     }
 
@@ -97,8 +118,8 @@ public class Turret extends Subsystem{
         telemetry.addData("State", currentState);
         telemetry.addData("Angle to Goal", angleToGoal);
         telemetry.addData("Target Angle", targetAngle);
-//        telemetry.addData("Current Angle", servoAngle);
-        telemetry.addData("Target Pos", servoTarget);
+        telemetry.addData("Target Pos", angleTarget);
+        telemetry.addData("Analog Angle", encoderAngle);
     }
 
     @Override
@@ -106,21 +127,20 @@ public class Turret extends Subsystem{
 
     }
 
-    // Provided radians should already be normalized between -pi and pi
-    private static double radiansToPos(double radians) {
-        if (Double.isNaN(radians)) {
+    private double angleToPos(double turretDeg) {
+        if (Double.isNaN(turretDeg)) {
             return Double.NaN;
         }
-
-        return CENTER_POS + (radians - CENTER_ANGLE) / TURRET_RANGE;
+        if (turretDeg < MIN_TURRET_ANGLE_LIMIT) turretDeg = MIN_TURRET_ANGLE_LIMIT;
+        if (turretDeg > MAX_TURRET_ANGLE_LIMIT) turretDeg = MAX_TURRET_ANGLE_LIMIT;
+        return RIGHT_TURRET_POS
+                + (turretDeg - RIGHT_TURRET_ANGLE) * (LEFT_TURRET_POS - RIGHT_TURRET_POS)
+                / (LEFT_TURRET_ANGLE - RIGHT_TURRET_ANGLE);
     }
 
-    private static double posToRadians(double pos) {
-        if (Double.isNaN(pos)) {
-            return Double.NaN;
-        }
-
-        return 0;
+    public boolean isAligned() {
+        double targetAngle = Math.toDegrees(robotState.getVectorToGoal().getTheta() - robotState.getPose().getHeading() + Math.PI);
+        targetAngle = MathUtils.normalizeDegrees(targetAngle, false);
+        return Math.abs(encoderAngle - targetAngle) < 5;
     }
-
 }

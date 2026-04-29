@@ -16,6 +16,8 @@ import com.seattlesolvers.solverslib.hardware.motors.MotorEx;
 import com.seattlesolvers.solverslib.hardware.motors.MotorGroup;
 import com.seattlesolvers.solverslib.util.MathUtils;
 
+import lombok.Setter;
+
 @Configurable
 public class Flywheel extends Subsystem {
 
@@ -33,7 +35,8 @@ public class Flywheel extends Subsystem {
     private SimpleMotorFeedforward feedforward = new SimpleMotorFeedforward(0, 0, 0);
 
     public static boolean useManualRpm = false;
-    public static double targetRpm = 0;
+    public static double manualRpm = 0;
+    private double targetRpm = 0;
     private double currentRpm = 0;
     private double currentAccel = 0;
     private double distanceToGoal = 0;
@@ -45,13 +48,13 @@ public class Flywheel extends Subsystem {
     public static double kV = 0.0002;
     public static double kA = 0;
 
-    public enum LauncherState {
+    public enum FlywheelState {
         IDLE,
         AUTO,
         PRESET
     }
 
-    private LauncherState state = LauncherState.IDLE;
+    private FlywheelState state = FlywheelState.IDLE;
 
     public Flywheel(HardwareMap hwMap) {
         this.hwMap = hwMap;
@@ -60,7 +63,7 @@ public class Flywheel extends Subsystem {
 
     @Override
     public void init() {
-        motor1 = new MotorEx(hwMap, "Launcher", Motor.GoBILDA.BARE);
+        motor1 = new MotorEx(hwMap, "Launcher1", Motor.GoBILDA.BARE);
         motor1.setInverted(true);
         motor1.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
         motor1.setRunMode(Motor.RunMode.RawPower);
@@ -84,14 +87,14 @@ public class Flywheel extends Subsystem {
                 targetRpm = 0;
                 break;
             case AUTO:
-                if (!useManualRpm) {
-                    targetRpm = distanceToRpm(distanceToGoal);
-                }
+                targetRpm = distanceToRpm(distanceToGoal);
                 break;
             case PRESET:
                 targetRpm = 3000;
                 break;
         }
+
+        if (useManualRpm) targetRpm = manualRpm;
 
         currentAccel = motor1.getAcceleration();
         currentRpm = (motor1.getCorrectedVelocity() / 28) * 60;
@@ -101,15 +104,14 @@ public class Flywheel extends Subsystem {
         telemetry.addData("MotorOutput", output);
         motors.set(output);
 
-        robotState.setLauncherReady(
-                Math.abs(currentRpm - targetRpm) < 65
-                        && state != LauncherState.IDLE);
-        updateTelemetry();
+//        robotState.setLauncherReady(
+//                Math.abs(currentRpm - targetRpm) < 65
+//                        && state != FlywheelState.IDLE);
     }
 
     @Override
     public void updateTelemetry() {
-        telemetry.addLine("--------------LAUNCHER--------------");
+        telemetry.addLine("--------------FLYWHEEL--------------");
         telemetry.addData("Distance to Goal", distanceToGoal);
         telemetry.addData("Current RPM", currentRpm);
         telemetry.addData("Current Accel", currentAccel);
@@ -124,21 +126,22 @@ public class Flywheel extends Subsystem {
     }
 
     private double distanceToRpm(double distanceInches) {
-        return Interpolation.interpolate(Tuning.DISTANCES_FROM_GOAL_INCHES, Tuning.REVOLUTIONS_PER_MINUTE, distanceInches);
+        return Interpolation.interpolate(LauncherConstants.SHOT_DISTANCES, LauncherConstants.SHOT_SPEEDS, distanceInches);
     }
 
     public void setAuto() {
-        state = LauncherState.AUTO;
+        state = FlywheelState.AUTO;
     }
 
     public void setIdle() {
-        state = LauncherState.IDLE;
+        state = FlywheelState.IDLE;
     }
     public void setPreset() {
-        state = LauncherState.PRESET;
+        state = FlywheelState.PRESET;
     }
 
     public boolean isReady() {
-        return Math.abs(currentRpm - targetRpm) <= 50;
+        return true;
+//        return Math.abs(currentRpm - targetRpm) <= 50;
     }
 }

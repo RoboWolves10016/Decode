@@ -24,7 +24,6 @@ public class RobotState {
 
     private static RobotState instance;
 
-
     public static RobotState getInstance() {
         if (instance == null) {
             instance = new RobotState();
@@ -45,6 +44,9 @@ public class RobotState {
         setPose(new Pose());
     }
 
+    @Setter
+    private double angularVelocity = 0;
+
     private Pose futurePose;
     {
         setFuturePose(new Pose());
@@ -52,19 +54,16 @@ public class RobotState {
 
     public void setPose(Pose pose) {
         this.pose = pose;
-        if (!Tuning.SHOOT_WHILE_MOVING) {
-            this.vectorToGoal = alliance.goalPose.minus(pose).getAsVector();
-        }
+        this.vectorToGoal = alliance.goalPose.minus(pose).getAsVector();
     }
 
     public void setFuturePose(Pose pose) {
         this.futurePose = pose;
-        if (Tuning.SHOOT_WHILE_MOVING) {
-            this.vectorToGoal = alliance.goalPose.minus(pose).getAsVector();
-        }
+        this.futureVectorToGoal = alliance.goalPose.minus(futurePose).getAsVector();
     }
 
     private Vector vectorToGoal;
+    private Vector futureVectorToGoal;
 
     @Setter @Nullable
     private Pose visionPose = null;
@@ -76,6 +75,9 @@ public class RobotState {
     @Setter
     private boolean launcherReady = false;
 
+
+    @Setter
+    private boolean isIndexerLoaded = false;
     @Setter
     private boolean isFull = false;
 
@@ -89,6 +91,7 @@ public class RobotState {
     boolean auton = true;
 
     double lastTimeStamp = -1;
+
 
     public void addTelemetry(TelemetryManager telemetry) {
         telemetry.addLine("--------------ROBOT STATE--------------");

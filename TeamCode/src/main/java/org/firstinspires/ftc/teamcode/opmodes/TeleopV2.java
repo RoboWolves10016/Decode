@@ -11,7 +11,12 @@ import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 
 import org.firstinspires.ftc.teamcode.RobotState;
 import org.firstinspires.ftc.teamcode.subsystems.Drive;
+import org.firstinspires.ftc.teamcode.subsystems.Flywheel;
+import org.firstinspires.ftc.teamcode.subsystems.Hood;
+import org.firstinspires.ftc.teamcode.subsystems.Indexer;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
+import org.firstinspires.ftc.teamcode.subsystems.Launcher;
+import org.firstinspires.ftc.teamcode.subsystems.Limelight;
 import org.firstinspires.ftc.teamcode.util.Alliance;
 
 import java.util.List;
@@ -20,6 +25,7 @@ import java.util.List;
 public class TeleopV2 extends OpMode {
     // These two static variables will be set in the stop() method of any auton OpMode ran before this.
     private final TelemetryManager telemetryManager = PanelsTelemetry.INSTANCE.getTelemetry();
+    RobotState robotState;
 
     private GamepadEx driver;
     private GamepadEx operator;
@@ -27,6 +33,10 @@ public class TeleopV2 extends OpMode {
     // Subsystems
     private Drive drivetrain;
     private Intake intake;
+    private Indexer indexer;
+
+    private Launcher launcher;
+    private Limelight limelight;
 
     @Override
     public void init() {
@@ -34,6 +44,8 @@ public class TeleopV2 extends OpMode {
         for (int i = 0; i < hubs.size(); ++i) {
             hubs.get(i).setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
+
+        robotState = RobotState.getInstance();
 
         driver = new GamepadEx(gamepad1);
         operator = new GamepadEx(gamepad2);
@@ -44,6 +56,14 @@ public class TeleopV2 extends OpMode {
         intake = new Intake(hardwareMap);
         intake.init();
 
+        indexer = new Indexer(hardwareMap);
+        indexer.init();
+
+        launcher = new Launcher(hardwareMap);
+        launcher.init();
+
+        limelight = new Limelight(hardwareMap);
+        limelight.init();
         RobotState.getInstance().setAuton(false);
     }
 
@@ -71,17 +91,40 @@ public class TeleopV2 extends OpMode {
 
         drivetrain.run();
         intake.run();
+        indexer.run();
+        launcher.run();
+        limelight.run();
 
         // Update telemetry to panels and Driver Station
         telemetryManager.update(telemetry);
     }
 
     private void processInputs() {
-        if (operator.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > 0.1) intake.runIntake();
-        else intake.stopIntake();
+        operator.readButtons();
+        if (operator.getButton(GamepadKeys.Button.LEFT_BUMPER)) {
+            indexer.setWantedState(Indexer.IndexerWantedState.EXHAUST);
+            intake.setWantedState(Intake.IntakeWantedState.EXHAUST);
+        } else if (operator.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > 0.1) {
+            intake.setWantedState(Intake.IntakeWantedState.INTAKE);
+            indexer.setWantedState(Indexer.IndexerWantedState.INTAKE);
+        } else if (operator.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.1) {
+            intake.setWantedState(Intake.IntakeWantedState.LAUNCH);
+            indexer.setWantedState(Indexer.IndexerWantedState.LAUNCH);
+        } else {
+                intake.setWantedState(Intake.IntakeWantedState.IDLE);
+                indexer.setWantedState(Indexer.IndexerWantedState.IDLE);
+        }
+
+
+        if (operator.getButton(GamepadKeys.Button.Y)) launcher.setActive();
+
+        if (operator.getButton(GamepadKeys.Button.B)) launcher.setIdle();
+
+        robotState.setLimelightEnabled(driver.getButton(GamepadKeys.Button.BACK));
 
         if (operator.wasJustPressed(GamepadKeys.Button.DPAD_UP)) intake.tweakUp();
         if (operator.wasJustPressed(GamepadKeys.Button.DPAD_DOWN)) intake.tweakDown();
+
 
     }
 }
