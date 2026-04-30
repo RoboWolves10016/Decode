@@ -35,17 +35,27 @@ public class Flywheel extends Subsystem {
     private SimpleMotorFeedforward feedforward = new SimpleMotorFeedforward(0, 0, 0);
 
     public static boolean useManualRpm = false;
+    public static boolean useManualDutyCycle = false;
+    public static double manualDutyCycle = 0.0;
     public static double manualRpm = 0;
+    public static double additionalRpm = 0;
+    public static boolean useIdleRpm = false;
     private double targetRpm = 0;
     private double currentRpm = 0;
     private double currentAccel = 0;
     private double distanceToGoal = 0;
 
-    public static double kP = 0.002;
-    public static double kI = 0.005;
+//    public static double kP = 0.002;
+//    public static double kI = 0.005;
+//    public static double kD = 0;
+//    public static double kS = 0.13;
+//    public static double kV = 0.0002;
+//    public static double kA  = 0.002;
+    public static double kP = 0.008;
+    public static double kI = 0.035;
     public static double kD = 0;
-    public static double kS = 0.13;
-    public static double kV = 0.0002;
+    public static double kS = 0.08;
+    public static double kV = 0.000140;
     public static double kA = 0;
 
     public enum FlywheelState {
@@ -84,10 +94,11 @@ public class Flywheel extends Subsystem {
         distanceToGoal = robotState.getVectorToGoal().getMagnitude();
         switch (state) {
             case IDLE:
-                targetRpm = 0;
+                if (useIdleRpm) targetRpm = LauncherConstants.SHOT_SPEEDS[LauncherConstants.SHOT_SPEEDS.length / 2];
+                else targetRpm = 0;
                 break;
             case AUTO:
-                targetRpm = distanceToRpm(distanceToGoal);
+                targetRpm = distanceToRpm(distanceToGoal) + additionalRpm;
                 break;
             case PRESET:
                 targetRpm = 3000;
@@ -101,6 +112,7 @@ public class Flywheel extends Subsystem {
 
 
         double output = MathUtils.clamp(velocityController.calculate(currentRpm, targetRpm) + feedforward.calculate(targetRpm, motor1.getAcceleration()), 0.0, 1.0);
+        if (useManualDutyCycle) output = manualDutyCycle;
         telemetry.addData("MotorOutput", output);
         motors.set(output);
 
@@ -144,4 +156,5 @@ public class Flywheel extends Subsystem {
         return true;
 //        return Math.abs(currentRpm - targetRpm) <= 50;
     }
+
 }

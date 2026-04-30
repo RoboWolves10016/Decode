@@ -12,7 +12,6 @@ import com.seattlesolvers.solverslib.hardware.servos.ServoExGroup;
 import com.seattlesolvers.solverslib.util.MathUtils;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.teamcode.Constants;
 import org.firstinspires.ftc.teamcode.RobotState;
 import org.firstinspires.ftc.teamcode.Tuning;
 
@@ -33,8 +32,8 @@ public class Turret extends Subsystem {
     public static double manualOverrideDegrees = 0d;
 
     private double angleToGoal = 0;
-    private double targetAngle = 0;
-    private double angleTarget = 0;
+    private double targetDeg = 0;
+    private double targetPos = 0.5;
     private double encoderAngle = 0;
 
     private ServoExGroup turretServos;
@@ -82,33 +81,33 @@ public class Turret extends Subsystem {
 
         switch (currentState) {
             case IDLE:
-                targetAngle = 0;
+                targetDeg = 0;
                 break;
             case AIMING:
-                targetAngle = Math.toDegrees(MathUtils.normalizeAngle(angleToGoal, false, AngleUnit.RADIANS));
+                targetDeg = Math.toDegrees(MathUtils.normalizeAngle(angleToGoal, false, AngleUnit.RADIANS));
                 break;
         }
 
         if (useManualOverride) {
-            angleTarget = manualOverrideDegrees;
-        } else {
-            angleTarget = targetAngle;
+            targetDeg = manualOverrideDegrees;
         }
 
-        angleTarget -= TURRET_ROT_FF * robotState.getAngularVelocity();
+        targetDeg -= TURRET_ROT_FF * robotState.getAngularVelocity();
 
-        angleTarget = MathUtils.clamp(angleTarget, MIN_TURRET_ANGLE_LIMIT, MAX_TURRET_ANGLE_LIMIT);
+        targetDeg = MathUtils.clamp(targetDeg, MIN_TURRET_ANGLE_LIMIT, MAX_TURRET_ANGLE_LIMIT);
 
         // Prevent limit wraparounds
-        if (angleTarget > 0 && encoderAngle < 0 && Math.abs(angleTarget - encoderAngle) > 200) {
-            angleTarget = -20;
+        if (targetDeg > 0 && encoderAngle < 0 && Math.abs(targetDeg - encoderAngle) > 200) {
+            targetDeg = -20;
         }
 
-        if (angleTarget < 0 && encoderAngle > 0 && Math.abs(angleTarget - encoderAngle) > 200) {
-            angleTarget = 20;
+        if (targetDeg < 0 && encoderAngle > 0 && Math.abs(targetDeg - encoderAngle) > 200) {
+            targetDeg = 20;
         }
 
-        turretServos.set(angleToPos(angleTarget));
+        targetPos = angleToPos(targetDeg);
+
+        turretServos.set(targetPos);
         updateTelemetry();
     }
 
@@ -117,8 +116,8 @@ public class Turret extends Subsystem {
         telemetry.addLine("--------------TURRET--------------");
         telemetry.addData("State", currentState);
         telemetry.addData("Angle to Goal", angleToGoal);
-        telemetry.addData("Target Angle", targetAngle);
-        telemetry.addData("Target Pos", angleTarget);
+        telemetry.addData("Target Degrees", targetDeg);
+        telemetry.addData("Target Pos", targetPos);
         telemetry.addData("Analog Angle", encoderAngle);
     }
 
@@ -141,6 +140,7 @@ public class Turret extends Subsystem {
     public boolean isAligned() {
         double targetAngle = Math.toDegrees(robotState.getVectorToGoal().getTheta() - robotState.getPose().getHeading() + Math.PI);
         targetAngle = MathUtils.normalizeDegrees(targetAngle, false);
-        return Math.abs(encoderAngle - targetAngle) < 5;
+//        return Math.abs(encoderAngle - targetAngle) < 5;
+        return true;
     }
 }

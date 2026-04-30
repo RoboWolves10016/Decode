@@ -1,0 +1,105 @@
+package org.firstinspires.ftc.teamcode.opmodes.auton;
+
+import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.BezierCurve;
+import com.pedropathing.geometry.BezierLine;
+import com.pedropathing.geometry.Pose;
+import com.pedropathing.paths.HeadingInterpolator;
+import com.pedropathing.paths.PathChain;
+
+import org.firstinspires.ftc.teamcode.util.Alliance;
+
+public class FarAutonPaths {
+
+    // Poses are RED by default, mirror for blue
+    public static Pose startingPose = new Pose();
+    public static Pose launchPose = startingPose;
+
+    // Poses for intaking from row 3
+    public static Pose row3Control = new Pose();
+    public static Pose row3End = new Pose();
+
+    // Poses for intaking from corner
+    public static Pose cornerIntake1Control = new Pose();
+    public static Pose cornerIntake1End = new Pose();
+    public static Pose cornerIntake1ReturnControl = new Pose();
+
+    // Poses for intaking from secret tunnel
+    public static Pose cornerIntake2Control = new Pose();
+    public static Pose cornerIntake2End = new Pose();
+    public static Pose cornerIntake2ReturnControl = new Pose();
+
+    /** FAR AUTON PATHS **/
+    public static PathChain launchToRow3;
+    public static PathChain row3ToLaunch;
+    public static PathChain launchToCorner1;
+    public static PathChain corner1ToLaunch;
+    public static PathChain launchToCorner2;
+    public static PathChain corner2ToLaunch;
+    public void initializeAlliance(Alliance alliance) {
+        if (alliance == Alliance.BLUE) {
+            startingPose = startingPose.mirror();
+            launchPose = launchPose.mirror();
+            row3Control = row3Control.mirror();
+            row3End = row3End.mirror();
+            cornerIntake1Control = cornerIntake1Control.mirror();
+            cornerIntake1End = cornerIntake1End.mirror();
+            cornerIntake1ReturnControl = cornerIntake1ReturnControl.mirror();
+            cornerIntake2Control = cornerIntake1Control.mirror();
+            cornerIntake2End = cornerIntake1End.mirror();
+            cornerIntake2ReturnControl = cornerIntake1ReturnControl.mirror();
+        }
+    }
+
+    public void createPaths(Follower follower) {
+        launchToRow3 = follower.pathBuilder()
+                .addPath(new BezierCurve(
+                                launchPose,
+                                row3Control,
+                                row3End)
+                ).setTangentHeadingInterpolation()
+                .build();
+
+        row3ToLaunch = follower.pathBuilder()
+                .addPath(new BezierLine(
+                        row3End,
+                        launchPose)
+                ).setHeadingInterpolation(HeadingInterpolator.piecewise(
+                        new HeadingInterpolator.PiecewiseNode(0.0, 0.8, HeadingInterpolator.tangent),
+                        new HeadingInterpolator.PiecewiseNode(0.8, 1.0, HeadingInterpolator.constant(launchPose.getHeading()))
+                )).build();
+
+        launchToCorner1 = follower.pathBuilder()
+                .addPath(new BezierCurve(
+                        launchPose,
+                        cornerIntake1Control,
+                        cornerIntake1End
+                )).setTangentHeadingInterpolation()
+                .build();
+
+        corner1ToLaunch = follower.pathBuilder()
+                .addPath(new BezierCurve(
+                        cornerIntake1End,
+                        cornerIntake1ReturnControl,
+                        launchPose
+                )).setHeadingInterpolation(HeadingInterpolator.tangent.reverse())
+                .build();
+
+        launchToCorner2 = follower.pathBuilder()
+                .addPath(new BezierCurve(
+                        launchPose,
+                        cornerIntake2Control,
+                        cornerIntake2End
+                )).setTangentHeadingInterpolation()
+                .build();
+
+        corner2ToLaunch = follower.pathBuilder()
+                .addPath(new BezierCurve(
+                        cornerIntake2End,
+                        cornerIntake2ReturnControl,
+                        launchPose
+                )).setHeadingInterpolation(HeadingInterpolator.tangent.reverse())
+                .build();
+
+    }
+}

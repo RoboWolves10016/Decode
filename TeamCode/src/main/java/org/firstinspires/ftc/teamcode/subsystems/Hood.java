@@ -28,8 +28,8 @@ public class Hood extends Subsystem{
     private AbsoluteAnalogEncoder encoder;
 
     @Setter
-    private double targetDeg = BOTTOM_HOOD_ANGLE;
-    private double targetPos = BOTTOM_HOOD_POS;
+    private double targetDeg = (BOTTOM_HOOD_ANGLE + TOP_HOOD_ANGLE) / 2;
+    private double targetPos = (BOTTOM_HOOD_POS + TOP_HOOD_POS) / 2;
 
     private double hoodPosition = 0;
 
@@ -61,14 +61,14 @@ public class Hood extends Subsystem{
         if ( Tuning.SHOOT_WHILE_MOVING) distanceToGoal = robotState.getFutureVectorToGoal().getMagnitude();
         else distanceToGoal = robotState.getVectorToGoal().getMagnitude();
 
-        targetPos = BOTTOM_HOOD_POS + 1;
+//        targetPos = BOTTOM_HOOD_POS + 1;
         if (tracking) targetDeg = distanceToHoodAngle(distanceToGoal);
+
+        if (useManualOverride) targetDeg = manualOverrideDeg;
 
         targetPos = angleToPos(targetDeg);
 
-        if (useManualOverride) targetPos = angleToPos(manualOverrideDeg);
-
-        if (Math.abs(targetPos - hoodPosition) > (TOP_HOOD_POS + BOTTOM_HOOD_POS) / 2)
+        if (Math.abs(targetDeg - hoodPosition) > 3 + ((TOP_HOOD_ANGLE - BOTTOM_HOOD_ANGLE) / 2))
             targetPos = (TOP_HOOD_POS + BOTTOM_HOOD_POS) / 2;
 
         servo.set(targetPos);
@@ -83,6 +83,7 @@ public class Hood extends Subsystem{
         telemetry.addData("Encoder Degrees", hoodPosition);
         telemetry.addData("Tracking?", tracking);
         telemetry.addData("Manual Angle", manualOverrideDeg);
+//        telemetry.addData("Test", );
     }
 
     @Override

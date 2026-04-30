@@ -32,8 +32,9 @@ public class Indexer extends Subsystem{
 
     public static double intakePower = 0.3;
     public static double inchPower = 0.0;
-    public static double holdPower = -0.25;
-    public static double feedPower = 1.0;
+    public static double holdPower = -0.22;
+    public static double closeFeedPower = 0.8;
+    public static double farFeedPower = 0.4;
 
     public static boolean useManualOverride = false;
     public static double manualOverrideThrottle = 0.0;
@@ -54,10 +55,10 @@ public class Indexer extends Subsystem{
         INTAKE(intakePower), // 1
         INCH(holdPower),
         HOLD(holdPower),
-        FEED(feedPower),
+        FEED(closeFeedPower),
         EXHAUST(-1.0);
 
-        public final double dutyCycle;
+        public double dutyCycle;
 
         IndexerState(double dutyCycle) {
             this.dutyCycle = dutyCycle;
@@ -92,6 +93,9 @@ public class Indexer extends Subsystem{
     public void run() {
         sensorTripped = !sensor.getState(); // Returns whether there is an object blocking the beam
         debouncedSensorTripped = debouncer.calculate(sensorTripped);
+
+        if (robotState.getPose().getY() < 72) IndexerState.FEED.dutyCycle = farFeedPower;
+        else IndexerState.FEED.dutyCycle = closeFeedPower;
 
         previousState = currentState;
         switch (currentState) {
