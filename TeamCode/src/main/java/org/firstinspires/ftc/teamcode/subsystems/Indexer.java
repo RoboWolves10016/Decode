@@ -114,7 +114,8 @@ public class Indexer extends Subsystem{
         }
 
 //         Write outputs
-        motor.set(currentState.dutyCycle);
+        if (useManualOverride) motor.set(manualOverrideThrottle);
+        else motor.set(currentState.dutyCycle);
 
         updateTelemetry();
     }

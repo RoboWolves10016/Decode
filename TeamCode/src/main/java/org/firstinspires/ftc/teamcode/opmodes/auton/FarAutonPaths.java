@@ -12,32 +12,33 @@ import org.firstinspires.ftc.teamcode.util.Alliance;
 public class FarAutonPaths {
 
     // Poses are RED by default, mirror for blue
-    public static Pose startingPose = new Pose();
-    public static Pose launchPose = startingPose;
+    public static Pose startingPose = new Pose(55.5, 7.44, Math.PI);
+    public static Pose launchPose = new Pose(58, 20, Math.toRadians(210));
 
     // Poses for intaking from row 3
-    public static Pose row3Control = new Pose();
-    public static Pose row3End = new Pose();
+    public static Pose row3Control = new Pose(45, 35);
+    public static Pose row3End = new Pose(20, 36, Math.toRadians(180));
 
     // Poses for intaking from corner
-    public static Pose cornerIntake1Control = new Pose();
-    public static Pose cornerIntake1End = new Pose();
+    public static Pose cornerIntake1Control = new Pose(8, 45);
+    public static Pose cornerIntake1End = new Pose(10, 11.5, Math.toRadians(270));
     public static Pose cornerIntake1ReturnControl = new Pose();
 
     // Poses for intaking from secret tunnel
-    public static Pose cornerIntake2Control = new Pose();
-    public static Pose cornerIntake2End = new Pose();
-    public static Pose cornerIntake2ReturnControl = new Pose();
+//    public static Pose cornerIntake2Control = new Pose();
+    public static Pose cornerIntake2End = new Pose(13, 9, Math.toRadians(180));
+//    public static Pose cornerIntake2ReturnControl = new Pose();
 
     /** FAR AUTON PATHS **/
+    public static PathChain startToLaunch;
     public static PathChain launchToRow3;
     public static PathChain row3ToLaunch;
     public static PathChain launchToCorner1;
     public static PathChain corner1ToLaunch;
     public static PathChain launchToCorner2;
     public static PathChain corner2ToLaunch;
-    public void initializeAlliance(Alliance alliance) {
-        if (alliance == Alliance.BLUE) {
+    public static void setAlliance(Alliance alliance) {
+        if (alliance == Alliance.RED) {
             startingPose = startingPose.mirror();
             launchPose = launchPose.mirror();
             row3Control = row3Control.mirror();
@@ -45,13 +46,20 @@ public class FarAutonPaths {
             cornerIntake1Control = cornerIntake1Control.mirror();
             cornerIntake1End = cornerIntake1End.mirror();
             cornerIntake1ReturnControl = cornerIntake1ReturnControl.mirror();
-            cornerIntake2Control = cornerIntake1Control.mirror();
+//            cornerIntake2Control = cornerIntake1Control.mirror();
             cornerIntake2End = cornerIntake1End.mirror();
-            cornerIntake2ReturnControl = cornerIntake1ReturnControl.mirror();
+//            cornerIntake2ReturnControl = cornerIntake1ReturnControl.mirror();
         }
     }
 
-    public void createPaths(Follower follower) {
+    public static void createPaths(Follower follower) {
+        startToLaunch = follower.pathBuilder()
+                .addPath(new BezierLine(
+                        startingPose,
+                        launchPose
+                )).setLinearHeadingInterpolation(startingPose.getHeading(), launchPose.getHeading())
+                .build();
+
         launchToRow3 = follower.pathBuilder()
                 .addPath(new BezierCurve(
                                 launchPose,
@@ -86,19 +94,19 @@ public class FarAutonPaths {
                 .build();
 
         launchToCorner2 = follower.pathBuilder()
-                .addPath(new BezierCurve(
+                .addPath(new BezierLine(
                         launchPose,
-                        cornerIntake2Control,
+//                        cornerIntake2Control,
                         cornerIntake2End
-                )).setTangentHeadingInterpolation()
+                )).setLinearHeadingInterpolation(launchPose.getHeading(), cornerIntake2End.getHeading())
                 .build();
 
         corner2ToLaunch = follower.pathBuilder()
-                .addPath(new BezierCurve(
+                .addPath(new BezierLine(
                         cornerIntake2End,
-                        cornerIntake2ReturnControl,
+//                        cornerIntake2ReturnControl,
                         launchPose
-                )).setHeadingInterpolation(HeadingInterpolator.tangent.reverse())
+                )).setHeadingInterpolation(HeadingInterpolator.linear(cornerIntake2End.getHeading(), launchPose.getHeading()))
                 .build();
 
     }

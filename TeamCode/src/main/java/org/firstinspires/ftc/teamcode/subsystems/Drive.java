@@ -175,7 +175,7 @@ public class Drive extends Subsystem{
         } else {
 //            telemetry.addData("",);
         }
-        Tuning.Drawing.drawDebug(follower);
+//        Tuning.Drawing.drawDebug(follower);
     }
 
     @Override

@@ -14,7 +14,7 @@ import java.util.TreeMap;
  * Predicts pose with twist integration and corrects with delayed measurements.
  */
 public class FusionLocalizer implements Localizer {
-    private final Localizer deadReckoning;
+    private final Localizer pinpoint;
     private Pose currentPosition;
     private Pose currentVelocity;
     private Matrix P;      // Covariance
@@ -27,12 +27,12 @@ public class FusionLocalizer implements Localizer {
     private final int bufferSize;
 
     public FusionLocalizer(
-            Localizer deadReckoning,
+            Localizer pinpoint,
             double[] processStdDevs,
             double[] measurementStdDevs,
             int bufferSize
     ) {
-        this.deadReckoning = deadReckoning;
+        this.pinpoint = pinpoint;
         this.currentPosition = new Pose();
         this.P = MatrixUtil.identity(3);
         this.Q = MatrixUtil.diag(
@@ -50,13 +50,13 @@ public class FusionLocalizer implements Localizer {
 
     @Override
     public void update() {
-        deadReckoning.update();
+        pinpoint.update();
         long now = System.nanoTime();
         double dt = lastUpdateTime < 0 ? 0 : (now - lastUpdateTime) / 1e9;
         lastUpdateTime = now;
 
         // --- 1. Predict step via twist integration ---
-        Pose twist = deadReckoning.getVelocity();
+        Pose twist = pinpoint.getVelocity();
         twistHistory.put(now, twist.copy());
         currentVelocity = twist.copy();
 
@@ -174,7 +174,7 @@ public class FusionLocalizer implements Localizer {
 
     @Override
     public Pose getVelocity() {
-        return currentVelocity != null ? currentVelocity : deadReckoning.getVelocity();
+        return currentVelocity != null ? currentVelocity : pinpoint.getVelocity();
     }
 
     @Override
@@ -182,13 +182,13 @@ public class FusionLocalizer implements Localizer {
 
     @Override
     public void setStartPose(Pose setStart) {
-        deadReckoning.setStartPose(setStart);
+        pinpoint.setStartPose(setStart);
     }
 
     @Override
     public void setPose(Pose setPose) {
         currentPosition = setPose.copy();
-        deadReckoning.setPose(setPose);
+        pinpoint.setPose(setPose);
         poseHistory.lastEntry().setValue(setPose.copy());
     }
 
@@ -196,19 +196,19 @@ public class FusionLocalizer implements Localizer {
     public double getTotalHeading() { return currentPosition.getHeading(); }
 
     @Override
-    public double getForwardMultiplier() { return deadReckoning.getForwardMultiplier(); }
+    public double getForwardMultiplier() { return pinpoint.getForwardMultiplier(); }
 
     @Override
-    public double getLateralMultiplier() { return deadReckoning.getLateralMultiplier(); }
+    public double getLateralMultiplier() { return pinpoint.getLateralMultiplier(); }
 
     @Override
-    public double getTurningMultiplier() { return deadReckoning.getTurningMultiplier(); }
+    public double getTurningMultiplier() { return pinpoint.getTurningMultiplier(); }
 
     @Override
-    public void resetIMU() throws InterruptedException { deadReckoning.resetIMU(); }
+    public void resetIMU() throws InterruptedException { pinpoint.resetIMU(); }
 
     @Override
-    public double getIMUHeading() { return deadReckoning.getIMUHeading(); }
+    public double getIMUHeading() { return pinpoint.getIMUHeading(); }
 
     @Override
     public boolean isNAN() {

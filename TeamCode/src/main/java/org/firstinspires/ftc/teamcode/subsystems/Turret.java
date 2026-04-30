@@ -92,7 +92,7 @@ public class Turret extends Subsystem {
             targetDeg = manualOverrideDegrees;
         }
 
-        targetDeg -= TURRET_ROT_FF * robotState.getAngularVelocity();
+//        targetDeg -= TURRET_ROT_FF * robotState.getAngularVelocity();
 
         targetDeg = MathUtils.clamp(targetDeg, MIN_TURRET_ANGLE_LIMIT, MAX_TURRET_ANGLE_LIMIT);
 
@@ -106,8 +106,10 @@ public class Turret extends Subsystem {
         }
 
         targetPos = angleToPos(targetDeg);
+//        targetPos = 0.5;
 
-        turretServos.set(targetPos);
+        servo1.set(targetPos);
+        servo2.set(targetPos);
         updateTelemetry();
     }
 
