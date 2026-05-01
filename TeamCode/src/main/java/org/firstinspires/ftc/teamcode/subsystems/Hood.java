@@ -27,6 +27,13 @@ public class Hood extends Subsystem{
     private ServoEx servo;
     private AbsoluteAnalogEncoder encoder;
 
+    private enum HoodState {
+        IDLE,
+        TRACKING,
+        PRESET
+    }
+    private HoodState state = HoodState.IDLE;
+
     @Setter
     private double targetDeg = (BOTTOM_HOOD_ANGLE + TOP_HOOD_ANGLE) / 2;
     private double targetPos = (BOTTOM_HOOD_POS + TOP_HOOD_POS) / 2;
@@ -36,8 +43,8 @@ public class Hood extends Subsystem{
     public static boolean useManualOverride = false;
     public static double manualOverrideDeg = 22d;
 
-    @Setter
-    private boolean tracking = false;
+//    @Setter
+//    private boolean tracking = false;
 
     public Hood(HardwareMap hwMap) {
         telemetry = PanelsTelemetry.INSTANCE.getTelemetry();
@@ -56,13 +63,21 @@ public class Hood extends Subsystem{
     @Override
     public void run() {
         hoodPosition = (encoder.getCurrentPosition() / 12) + 19.5;
-//        hoodPosition = encoder.getCurrentPosition();
         double distanceToGoal;
-        if ( Tuning.SHOOT_WHILE_MOVING) distanceToGoal = robotState.getFutureVectorToGoal().getMagnitude();
+        if (Tuning.SHOOT_WHILE_MOVING) distanceToGoal = robotState.getFutureVectorToGoal().getMagnitude();
         else distanceToGoal = robotState.getVectorToGoal().getMagnitude();
 
-//        targetPos = BOTTOM_HOOD_POS + 1;
-        if (tracking) targetDeg = distanceToHoodAngle(distanceToGoal);
+        switch (state) {
+            case IDLE:
+                targetDeg = (TOP_HOOD_ANGLE + BOTTOM_HOOD_ANGLE) / 2;
+                break;
+            case TRACKING:
+                targetDeg = distanceToHoodAngle(distanceToGoal);
+                break;
+            case PRESET:
+                targetDeg = TOP_HOOD_ANGLE;
+                break;
+        }
 
         if (useManualOverride) targetDeg = manualOverrideDeg;
 
@@ -78,10 +93,10 @@ public class Hood extends Subsystem{
     @Override
     protected void updateTelemetry() {
         telemetry.addLine("--------------HOOD--------------");
+        telemetry.addData("State", state.toString());
         telemetry.addData("Target Angle (Deg)", targetDeg);
         telemetry.addData("Target Pos", targetPos);
         telemetry.addData("Encoder Degrees", hoodPosition);
-        telemetry.addData("Tracking?", tracking);
         telemetry.addData("Manual Angle", manualOverrideDeg);
 //        telemetry.addData("Test", );
     }
@@ -89,6 +104,18 @@ public class Hood extends Subsystem{
     @Override
     public void stop() {
 
+    }
+
+    public void setIdle() {
+        state = HoodState.IDLE;
+    }
+
+    public void setTracking() {
+        state = HoodState.TRACKING;
+    }
+
+    public void setPreset() {
+        state = HoodState.PRESET;
     }
 
     private double angleToPos(double hoodDegrees) {

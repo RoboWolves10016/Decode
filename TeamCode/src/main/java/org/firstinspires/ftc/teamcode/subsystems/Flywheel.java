@@ -6,6 +6,7 @@ import com.bylazar.telemetry.PanelsTelemetry;
 
 import org.firstinspires.ftc.teamcode.RobotState;
 import org.firstinspires.ftc.teamcode.Tuning;
+import org.firstinspires.ftc.teamcode.util.Alliance;
 import org.firstinspires.ftc.teamcode.util.Interpolation;
 import com.bylazar.telemetry.TelemetryManager;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -99,9 +100,15 @@ public class Flywheel extends Subsystem {
                 break;
             case AUTO:
                 targetRpm = distanceToRpm(distanceToGoal) + additionalRpm;
+                if (robotState.getVectorToGoal().getMagnitude() < 56) targetRpm -= 100;
                 break;
             case PRESET:
-                targetRpm = 3000;
+                if ((robotState.getPose().getX() > 72 && robotState.getAlliance() == Alliance.BLUE)
+                        || (robotState.getPose().getX() < 72 && robotState.getAlliance() == Alliance.RED)) {
+                    targetRpm = LauncherConstants.PRESET_RPM_FAR;
+                } else {
+                    targetRpm = LauncherConstants.PRESET_RPM_CLOSE;
+                }
                 break;
         }
 
@@ -148,13 +155,13 @@ public class Flywheel extends Subsystem {
     public void setIdle() {
         state = FlywheelState.IDLE;
     }
+
     public void setPreset() {
         state = FlywheelState.PRESET;
     }
 
     public boolean isReady() {
-        return true;
-//        return Math.abs(currentRpm - targetRpm) <= 50;
+        return Math.abs(currentRpm - targetRpm) < 100;
     }
 
 }

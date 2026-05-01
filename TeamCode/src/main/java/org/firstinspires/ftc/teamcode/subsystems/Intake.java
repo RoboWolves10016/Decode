@@ -37,8 +37,11 @@ public class Intake extends Subsystem {
     private static final double INTAKE_POWER = 1.0;
     private static final double EXHAUST_POWER = -0.5;
     private static final double FEED_POWER = 1.0;
-    public static boolean manualOverride = false;
+    public static boolean manualServoOverride = false;
     public static double manualPos = IDLE_POS;
+    public static boolean useManualPower = false;
+    public static double manualPower = 0.0;
+
 
     private double posTweak = 0.00;
     private boolean isOverCurrent = false;
@@ -112,8 +115,8 @@ public class Intake extends Subsystem {
         }
 
         // Set outputs
-        intakeMotor.set(currentState.speed);
-        servo.set(MathUtils.clamp(manualOverride ? manualPos : currentState.pos + posTweak, MIN_POS, MAX_POS));
+        intakeMotor.set(useManualPower ? manualPower : currentState.speed);
+        servo.set(MathUtils.clamp(manualServoOverride ? manualPos : currentState.pos + posTweak, MIN_POS, MAX_POS));
         updateTelemetry();
     }
 

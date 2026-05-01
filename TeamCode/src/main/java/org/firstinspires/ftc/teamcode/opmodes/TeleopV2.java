@@ -120,6 +120,8 @@ public class TeleopV2 extends OpMode {
 
         if (operator.getButton(GamepadKeys.Button.B)) launcher.setIdle();
 
+        if (operator.getButton(GamepadKeys.Button.X)) launcher.setPreset();
+
         robotState.setLimelightEnabled(driver.getButton(GamepadKeys.Button.BACK));
 
         if (operator.wasJustPressed(GamepadKeys.Button.DPAD_UP)) intake.tweakUp();

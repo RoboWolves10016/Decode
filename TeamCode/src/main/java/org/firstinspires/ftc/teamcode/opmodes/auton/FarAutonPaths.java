@@ -11,13 +11,14 @@ import org.firstinspires.ftc.teamcode.util.Alliance;
 
 public class FarAutonPaths {
 
-    // Poses are RED by default, mirror for blue
-    public static Pose startingPose = new Pose(55.5, 7.44, Math.PI);
+
+    // Poses are BLUE by default, mirror for red
+    public static Pose startingPose = new Pose(55.5, 7.44, Math.toRadians(180));
     public static Pose launchPose = new Pose(58, 20, Math.toRadians(210));
 
     // Poses for intaking from row 3
-    public static Pose row3Control = new Pose(45, 35);
-    public static Pose row3End = new Pose(20, 36, Math.toRadians(180));
+    public static Pose row3Control = new Pose(45, 34);
+    public static Pose row3End = new Pose(20, 32, Math.toRadians(180));
 
     // Poses for intaking from corner
     public static Pose cornerIntake1Control = new Pose(8, 45);
@@ -73,8 +74,8 @@ public class FarAutonPaths {
                         row3End,
                         launchPose)
                 ).setHeadingInterpolation(HeadingInterpolator.piecewise(
-                        new HeadingInterpolator.PiecewiseNode(0.0, 0.8, HeadingInterpolator.tangent),
-                        new HeadingInterpolator.PiecewiseNode(0.8, 1.0, HeadingInterpolator.constant(launchPose.getHeading()))
+                        new HeadingInterpolator.PiecewiseNode(0.0, 0.5, HeadingInterpolator.tangent.reverse()),
+                        new HeadingInterpolator.PiecewiseNode(0.5, 1.0, HeadingInterpolator.constant(startingPose.getHeading()))
                 )).build();
 
         launchToCorner1 = follower.pathBuilder()
@@ -98,7 +99,7 @@ public class FarAutonPaths {
                         launchPose,
 //                        cornerIntake2Control,
                         cornerIntake2End
-                )).setLinearHeadingInterpolation(launchPose.getHeading(), cornerIntake2End.getHeading())
+                )).setTangentHeadingInterpolation()
                 .build();
 
         corner2ToLaunch = follower.pathBuilder()
@@ -106,7 +107,7 @@ public class FarAutonPaths {
                         cornerIntake2End,
 //                        cornerIntake2ReturnControl,
                         launchPose
-                )).setHeadingInterpolation(HeadingInterpolator.linear(cornerIntake2End.getHeading(), launchPose.getHeading()))
+                )).setHeadingInterpolation(HeadingInterpolator.linear(cornerIntake2End.getHeading(), startingPose.getHeading()))
                 .build();
 
     }

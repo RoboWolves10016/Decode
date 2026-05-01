@@ -5,6 +5,7 @@ import static org.firstinspires.ftc.teamcode.subsystems.LauncherConstants.*;
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
+import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.seattlesolvers.solverslib.hardware.AbsoluteAnalogEncoder;
 import com.seattlesolvers.solverslib.hardware.servos.ServoEx;
@@ -14,6 +15,7 @@ import com.seattlesolvers.solverslib.util.MathUtils;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.RobotState;
 import org.firstinspires.ftc.teamcode.Tuning;
+import org.firstinspires.ftc.teamcode.util.Alliance;
 
 import lombok.Setter;
 
@@ -41,12 +43,15 @@ public class Turret extends Subsystem {
     private ServoEx servo2;
     private AbsoluteAnalogEncoder encoder;
 
-    @Setter
-    private boolean tracking = false;
+//    @Setter
+//    private boolean tracking = false;
+
+    private boolean presetShot = false;
 
     private enum TurretState {
         AIMING,
-        IDLE
+        IDLE,
+        PRESET
     }
 
     private TurretState currentState = TurretState.IDLE;
@@ -72,8 +77,6 @@ public class Turret extends Subsystem {
     @Override
     public void run() {
         encoderAngle = (-encoder.getCurrentPosition() * TURRET_RATIO) + 194;
-        if (tracking) currentState = TurretState.AIMING;
-        else currentState = TurretState.IDLE;
         if (Tuning.SHOOT_WHILE_MOVING)
             angleToGoal = robotState.getFutureVectorToGoal().getTheta() - robotState.getPose().getHeading() + Math.PI;
         else
@@ -85,6 +88,12 @@ public class Turret extends Subsystem {
                 break;
             case AIMING:
                 targetDeg = Math.toDegrees(MathUtils.normalizeAngle(angleToGoal, false, AngleUnit.RADIANS));
+                break;
+            case PRESET:
+                Pose presetPose = robotState.getPose().getX() > 72 ? RED_SIDE_PRESET_POSE : BLUE_SIDE_PRESET_POSE;
+                presetPose = presetPose.setHeading(robotState.getPose().getHeading());
+                targetDeg = robotState.getAlliance().goalPose.minus(presetPose).getAsVector().getTheta() + Math.PI;
+                targetDeg = Math.toDegrees(targetDeg);
                 break;
         }
 
@@ -128,6 +137,18 @@ public class Turret extends Subsystem {
 
     }
 
+    public void setIdle() {
+        currentState = TurretState.IDLE;
+    }
+
+    public void setAiming() {
+        currentState = TurretState.AIMING;
+    }
+
+    public void setPreset() {
+        currentState = TurretState.PRESET;
+    }
+
     private double angleToPos(double turretDeg) {
         if (Double.isNaN(turretDeg)) {
             return Double.NaN;
@@ -140,8 +161,8 @@ public class Turret extends Subsystem {
     }
 
     public boolean isAligned() {
-        double targetAngle = Math.toDegrees(robotState.getVectorToGoal().getTheta() - robotState.getPose().getHeading() + Math.PI);
-        targetAngle = MathUtils.normalizeDegrees(targetAngle, false);
+//        double targetAngle = Math.toDegrees(robotState.getVectorToGoal().getTheta() - robotState.getPose().getHeading() + Math.PI);
+//        targetAngle = MathUtils.normalizeDegrees(targetAngle, false);
 //        return Math.abs(encoderAngle - targetAngle) < 5;
         return true;
     }

@@ -1,12 +1,13 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.bylazar.configurables.annotations.Configurable;
+import com.pedropathing.geometry.Pose;
 
 @Configurable
 public class LauncherConstants {
     // Flywheel Constants
     public static final double[] SHOT_DISTANCES = {24, 32, 40, 52, 64, 75, 85, 95, 110, 130, 140, 150};
-    public static final double[] SHOT_SPEEDS = {2600, 2600, 2700, 2800, 3000, 3050, 3200, 3350, 3500, 3850, 4000, 4075};
+    public static final double[] SHOT_SPEEDS = {2600, 2600, 2700, 2800, 3000, 3050, 3200, 3350, 3500, 3850, 4000, 4150};
     public static final double[] AIR_TIMES = {0.5, 0.5, 0.5, 0.6, 0.75, 0.8, 0.85, 1.0, 1.1, 1.2};
 
     // Turret Constants
@@ -34,4 +35,11 @@ public class LauncherConstants {
     public static final double TOP_HOOD_POS = 0.08;
     public static final double TOP_HOOD_ANGLE = 47d;
     public static final double HOOD_CACHING_TOL_DEG = 1d;
+
+    // PRESET SHOT CONSTANTS
+    public static final Pose RED_SIDE_PRESET_POSE = new Pose(90, 7.44);
+    public static final Pose BLUE_SIDE_PRESET_POSE = new Pose(44, 7.44);
+
+    public static final double PRESET_RPM_CLOSE = 4100;
+    public static final double PRESET_RPM_FAR = 4500;
 }

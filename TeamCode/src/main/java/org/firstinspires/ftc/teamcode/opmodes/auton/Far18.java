@@ -17,7 +17,7 @@ import org.firstinspires.ftc.teamcode.subsystems.Launcher;
 import org.firstinspires.ftc.teamcode.subsystems.Limelight;
 import org.firstinspires.ftc.teamcode.util.Alliance;
 
-@Autonomous(name="BLUE Far 18")
+@Autonomous(name="Far 18")
 public class Far18 extends OpMode {
     private final RobotState robotState = RobotState.getInstance();
     private final ElapsedTime stateTimer = new ElapsedTime();
@@ -42,9 +42,8 @@ public class Far18 extends OpMode {
         drivetrain.startAuton();
         follower = drivetrain.getFollower();
 
-        FarAutonPaths.setAlliance(alliance);
-        FarAutonPaths.createPaths(follower);
-        follower.setStartingPose(FarAutonPaths.startingPose);
+//        FarAutonPaths.setAlliance(alliance);
+//        FarAutonPaths.createPaths(follower);
 
         launcher = new Launcher(hardwareMap);
         launcher.init();
@@ -62,7 +61,7 @@ public class Far18 extends OpMode {
 //        limelight = new Limelight(hardwareMap);
 //        limelight.init();
 
-        robotState.setAlliance(alliance);
+//        robotState.setAlliance(alliance);
         robotState.setLimelightEnabled(false);
 
     }
@@ -77,8 +76,7 @@ public class Far18 extends OpMode {
         if (gamepad1.b) RobotState.getInstance().setAlliance(Alliance.RED);
         if (gamepad1.x) RobotState.getInstance().setAlliance(Alliance.BLUE);
 
-//        FarAutonPaths.setAlliance(alliance);
-//        FarAutonPaths.createPaths(follower);
+
 
 //        telemetryM.addData("Sees Pattern", limelight.isHasSeenPattern());
         telemetryM.update(telemetry);
@@ -88,6 +86,10 @@ public class Far18 extends OpMode {
     public void start() {
         follower.activateAllPIDFs();
         stateTimer.reset();
+        FarAutonPaths.setAlliance(robotState.getAlliance());
+        FarAutonPaths.createPaths(follower);
+        follower.setStartingPose(FarAutonPaths.startingPose);
+        follower.update(); // TRY REMOVING
     }
 
     @Override
@@ -107,7 +109,7 @@ public class Far18 extends OpMode {
                 if (stateTimer.seconds() > 1.5) {
                     intake.setWantedState(Intake.IntakeWantedState.LAUNCH);
                     indexer.setWantedState(Indexer.IndexerWantedState.LAUNCH);
-                    advanceAutonState();
+                    advanceAutonState(5);
                 }
                 break;
             case 2:
@@ -175,7 +177,8 @@ public class Far18 extends OpMode {
                     intake.setWantedState(Intake.IntakeWantedState.INTAKE);
                     indexer.setWantedState(Indexer.IndexerWantedState.INTAKE);
                     follower.followPath(FarAutonPaths.launchToCorner2);
-                    if (numCycles < 3) {
+                    ++numCycles;
+                    if (numCycles < 4) {
                         follower.followPath(FarAutonPaths.launchToCorner2);
                         advanceAutonState(6);
                     } else {
@@ -195,6 +198,7 @@ public class Far18 extends OpMode {
         drivetrain.run();
         intake.run();
         launcher.run();
+        indexer.run();
 //        limelight.run();
         telemetryM.update(telemetry);
     }

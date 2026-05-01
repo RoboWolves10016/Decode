@@ -19,18 +19,18 @@ public class Launcher extends Subsystem {
     private Hood hood;
     private Turret turret;
 
-    private enum LauncherState {
-        IDLE,
-        SPINNING_UP,
-        SPUN_UP,
-    }
+//    private enum LauncherState {
+//        IDLE,
+//        SPINNING_UP,
+//        SPUN_UP,
+//    }
 
     private enum LauncherWantedState {
         IDLE,
-        ACTIVE
+        ACTIVE,
+        PRESET
     }
 
-    private LauncherState currentState = LauncherState.IDLE;
     private LauncherWantedState wantedState = LauncherWantedState.IDLE;
 
     public Launcher(HardwareMap hwMap) {
@@ -54,14 +54,18 @@ public class Launcher extends Subsystem {
         switch (wantedState) {
             case IDLE:
                 flywheel.setIdle();
-                hood.setTracking(false);
-                turret.setTracking(false);
+                hood.setIdle();
+                turret.setIdle();
                 break;
             case ACTIVE:
                 flywheel.setAuto();
-                hood.setTracking(true);
-                turret.setTracking(true);
+                hood.setTracking();
+                turret.setAiming();
                 break;
+            case PRESET:
+                flywheel.setPreset();
+                hood.setPreset();
+                turret.setPreset();
         }
 
         robotState.setLauncherReady(turret.isAligned() && flywheel.isReady());
@@ -71,19 +75,22 @@ public class Launcher extends Subsystem {
         turret.run();
         updateTelemetry();
     }
+    public void setIdle() {
+        wantedState = LauncherWantedState.IDLE;
+    }
 
     public void setActive() {
         wantedState = LauncherWantedState.ACTIVE;
     }
 
-    public void setIdle() {
-        wantedState = LauncherWantedState.IDLE;
+    public void setPreset() {
+        wantedState = LauncherWantedState.PRESET;
     }
 
     @Override
     protected void updateTelemetry() {
         telemetry.addLine("--------------Master Launcher--------------");
-        telemetry.addData("State", currentState.toString());
+        telemetry.addData("State", wantedState.toString());
         flywheel.updateTelemetry();
         hood.updateTelemetry();
         turret.updateTelemetry();
