@@ -104,12 +104,12 @@ public class TeleopV2 extends OpMode {
         if (operator.getButton(GamepadKeys.Button.LEFT_BUMPER)) {
             indexer.setWantedState(Indexer.IndexerWantedState.EXHAUST);
             intake.setWantedState(Intake.IntakeWantedState.EXHAUST);
-        } else if (operator.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > 0.1) {
-            intake.setWantedState(Intake.IntakeWantedState.INTAKE);
-            indexer.setWantedState(Indexer.IndexerWantedState.INTAKE);
         } else if (operator.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.1) {
             intake.setWantedState(Intake.IntakeWantedState.LAUNCH);
             indexer.setWantedState(Indexer.IndexerWantedState.LAUNCH);
+        } else if (operator.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > 0.1) {
+            intake.setWantedState(Intake.IntakeWantedState.INTAKE);
+            indexer.setWantedState(Indexer.IndexerWantedState.INTAKE);
         } else {
                 intake.setWantedState(Intake.IntakeWantedState.IDLE);
                 indexer.setWantedState(Indexer.IndexerWantedState.IDLE);

@@ -10,6 +10,7 @@ import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 import com.seattlesolvers.solverslib.hardware.motors.MotorEx;
 
 import org.firstinspires.ftc.teamcode.RobotState;
+import org.firstinspires.ftc.teamcode.pedropathing.Tuning;
 import org.firstinspires.ftc.teamcode.subsystems.Drive;
 import org.firstinspires.ftc.teamcode.subsystems.Indexer;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
@@ -20,6 +21,7 @@ import org.firstinspires.ftc.teamcode.util.Alliance;
 @Autonomous(name="Far 18")
 public class Far18 extends OpMode {
     private final RobotState robotState = RobotState.getInstance();
+    private final ElapsedTime fullTimer = new ElapsedTime();
     private final ElapsedTime stateTimer = new ElapsedTime();
 
     private final Alliance alliance = Alliance.BLUE;
@@ -72,9 +74,9 @@ public class Far18 extends OpMode {
         follower.update();
         telemetryM.addData("Starting Pose", FarAutonPaths.startingPose);
         telemetry.addData("Alliance", robotState.getAlliance());
-//        drawOnlyCurrent();
         if (gamepad1.b) RobotState.getInstance().setAlliance(Alliance.RED);
         if (gamepad1.x) RobotState.getInstance().setAlliance(Alliance.BLUE);
+
 
 
 
@@ -86,6 +88,7 @@ public class Far18 extends OpMode {
     public void start() {
         follower.activateAllPIDFs();
         stateTimer.reset();
+
         FarAutonPaths.setAlliance(robotState.getAlliance());
         FarAutonPaths.createPaths(follower);
         follower.setStartingPose(FarAutonPaths.startingPose);
@@ -94,8 +97,8 @@ public class Far18 extends OpMode {
 
     @Override
     public void loop() {
-        updateTelemetry();
         RobotState.getInstance().addTelemetry(telemetryM);
+        updateTelemetry();
 
         switch (autonState) {
             case 0:
@@ -109,12 +112,12 @@ public class Far18 extends OpMode {
                 if (stateTimer.seconds() > 1.5) {
                     intake.setWantedState(Intake.IntakeWantedState.LAUNCH);
                     indexer.setWantedState(Indexer.IndexerWantedState.LAUNCH);
-                    advanceAutonState(5);
+                    advanceAutonState();
                 }
                 break;
             case 2:
                 // Launch
-                if (stateTimer.seconds() > 2) {
+                if (stateTimer.seconds() > 1) {
                     launcher.setIdle();
                     intake.setWantedState(Intake.IntakeWantedState.INTAKE);
                     indexer.setWantedState(Indexer.IndexerWantedState.INTAKE);
@@ -127,14 +130,16 @@ public class Far18 extends OpMode {
                 // Intake row 3
                 if (!follower.isBusy() || stateTimer.seconds() > 3) {
                     launcher.setActive();
-                    intake.setWantedState(Intake.IntakeWantedState.IDLE);
-                    indexer.setWantedState(Indexer.IndexerWantedState.IDLE);
                     follower.followPath(FarAutonPaths.row3ToLaunch);
                     advanceAutonState();
                 }
                 break;
             case 4:
                 // Drive to launch
+                if (stateTimer.seconds() > 0.5) {
+                    intake.setWantedState(Intake.IntakeWantedState.IDLE);
+                    indexer.setWantedState(Indexer.IndexerWantedState.IDLE);
+                }
                 if (!follower.isBusy() || stateTimer.seconds() > 3) {
                     intake.setWantedState(Intake.IntakeWantedState.LAUNCH);
                     indexer.setWantedState(Indexer.IndexerWantedState.LAUNCH);
@@ -147,46 +152,71 @@ public class Far18 extends OpMode {
                     launcher.setIdle();
                     intake.setWantedState(Intake.IntakeWantedState.INTAKE);
                     indexer.setWantedState(Indexer.IndexerWantedState.INTAKE);
-                    follower.followPath(FarAutonPaths.launchToCorner2);
                     ++numCycles;
+                    follower.followPath(numCycles % 2 == 0 ? FarAutonPaths.launchToCorner2 : FarAutonPaths.launchToCorner3);
                     advanceAutonState();
                 }
                 break;
             case 6:
                 // Intake corner 2
-                if (!follower.isBusy() || stateTimer.seconds() > 3) {
+                if (!follower.isBusy() || stateTimer.seconds() > 4) {
                     launcher.setActive();
-                    intake.setWantedState(Intake.IntakeWantedState.IDLE);
-                    indexer.setWantedState(Indexer.IndexerWantedState.IDLE);
-                    follower.followPath(FarAutonPaths.corner2ToLaunch);
-                    advanceAutonState();
+//                    if (fullTimer.seconds() < 26){
+//                         Has enough time left for another cycle
+                    if (numCycles >= 6) {
+                        follower.breakFollowing();
+                        advanceAutonState(8);
+                    } else {
+                        follower.followPath(numCycles % 2 == 0 ? FarAutonPaths.corner2ToLaunch : FarAutonPaths.corner3ToLaunch);
+                        advanceAutonState();
+                    }
+//                    } else {
+//                        follower.breakFollowing();
+//                        advanceAutonState(8);
+//                    }
                 }
                 break;
             case 7:
                 // Drive to launch
+                if (stateTimer.seconds() > 0.5) {
+                    intake.setWantedState(Intake.IntakeWantedState.IDLE);
+                    indexer.setWantedState(Indexer.IndexerWantedState.IDLE);
+                }
                 if (!follower.isBusy() || stateTimer.seconds() > 2) {
                     intake.setWantedState(Intake.IntakeWantedState.LAUNCH);
                     indexer.setWantedState(Indexer.IndexerWantedState.LAUNCH);
-                    advanceAutonState();
+                    advanceAutonState(5);
                 }
                 break;
+//            case 8:
+//                // Launch
+//                if (stateTimer.seconds() > 1) {
+//                    launcher.setIdle();
+//                    intake.setWantedState(Intake.IntakeWantedState.INTAKE);
+//                    indexer.setWantedState(Indexer.IndexerWantedState.INTAKE);
+//                    follower.followPath(FarAutonPaths.launchToCorner2);
+//                    ++numCycles;
+//                    advanceAutonState();
+//                }
+//                break;
+//            case 9:
+//                // Intake corner 2
+//                if (!follower.isBusy() || stateTimer.seconds() > 4) {
+//                    launcher.setActive();
+//                    intake.setWantedState(Intake.IntakeWantedState.IDLE);
+//                    indexer.setWantedState(Indexer.IndexerWantedState.IDLE);
+//                    follower.followPath(FarAutonPaths.corner2ToLaunch);
+//                }
+//                break;
+//            case 10:
+//                // Drive to launch
+//                if (!follower.isBusy() || stateTimer.seconds() > 2) {
+//                    intake.setWantedState(Intake.IntakeWantedState.LAUNCH);
+//                    indexer.setWantedState(Indexer.IndexerWantedState.LAUNCH);
+//                    advanceAutonState();
+//                }
+//                break;
             case 8:
-                // Launch + Repeat
-                if (stateTimer.seconds() > 1) {
-                    launcher.setIdle();
-                    intake.setWantedState(Intake.IntakeWantedState.INTAKE);
-                    indexer.setWantedState(Indexer.IndexerWantedState.INTAKE);
-                    follower.followPath(FarAutonPaths.launchToCorner2);
-                    ++numCycles;
-                    if (numCycles < 4) {
-                        follower.followPath(FarAutonPaths.launchToCorner2);
-                        advanceAutonState(6);
-                    } else {
-                        follower.followPath(FarAutonPaths.launchToCorner2);
-                        advanceAutonState(9);
-                    }
-                }
-            case 9:
                 // Leave launch line and wait
                 launcher.setIdle();
                 intake.setWantedState(Intake.IntakeWantedState.IDLE);

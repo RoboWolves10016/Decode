@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.bylazar.configurables.annotations.Configurable;
-import com.pedropathing.geometry.Pose;
 
 @Configurable
 public class LauncherConstants {
@@ -37,9 +36,14 @@ public class LauncherConstants {
     public static final double HOOD_CACHING_TOL_DEG = 1d;
 
     // PRESET SHOT CONSTANTS
-    public static final Pose RED_SIDE_PRESET_POSE = new Pose(90, 7.44);
-    public static final Pose BLUE_SIDE_PRESET_POSE = new Pose(44, 7.44);
+//    public static final Pose RED_SIDE_PRESET_POSE = new Pose(90, 7.44);
+//    public static final Pose BLUE_SIDE_PRESET_POSE = new Pose(44, 7.44);
 
-    public static final double PRESET_RPM_CLOSE = 4100;
+    public static final double PRESET_DEG_CLOSE_RED = 67;
+    public static final double PRESET_DEG_FAR_RED = 67;
+    public static final double PRESET_DEG_CLOSE_BLUE = 113;
+    public static final double PRESET_DEG_FAR_BLUE = 113;
+
+    public static final double PRESET_RPM_CLOSE = 3950;
     public static final double PRESET_RPM_FAR = 4500;
 }

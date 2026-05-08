@@ -103,12 +103,12 @@ public class Flywheel extends Subsystem {
                 if (robotState.getVectorToGoal().getMagnitude() < 56) targetRpm -= 100;
                 break;
             case PRESET:
-                if ((robotState.getPose().getX() > 72 && robotState.getAlliance() == Alliance.BLUE)
-                        || (robotState.getPose().getX() < 72 && robotState.getAlliance() == Alliance.RED)) {
-                    targetRpm = LauncherConstants.PRESET_RPM_FAR;
-                } else {
+//                if ((robotState.getPose().getX() > 72 && robotState.getAlliance() == Alliance.BLUE)
+//                        || (robotState.getPose().getX() < 72 && robotState.getAlliance() == Alliance.RED)) {
+//                    targetRpm = LauncherConstants.PRESET_RPM_FAR;
+//                } else {
                     targetRpm = LauncherConstants.PRESET_RPM_CLOSE;
-                }
+//                }
                 break;
         }
 

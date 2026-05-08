@@ -5,7 +5,6 @@ import static org.firstinspires.ftc.teamcode.subsystems.LauncherConstants.*;
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
-import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.seattlesolvers.solverslib.hardware.AbsoluteAnalogEncoder;
 import com.seattlesolvers.solverslib.hardware.servos.ServoEx;
@@ -16,8 +15,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.RobotState;
 import org.firstinspires.ftc.teamcode.Tuning;
 import org.firstinspires.ftc.teamcode.util.Alliance;
-
-import lombok.Setter;
 
 @Configurable
 public class Turret extends Subsystem {
@@ -90,10 +87,13 @@ public class Turret extends Subsystem {
                 targetDeg = Math.toDegrees(MathUtils.normalizeAngle(angleToGoal, false, AngleUnit.RADIANS));
                 break;
             case PRESET:
-                Pose presetPose = robotState.getPose().getX() > 72 ? RED_SIDE_PRESET_POSE : BLUE_SIDE_PRESET_POSE;
-                presetPose = presetPose.setHeading(robotState.getPose().getHeading());
-                targetDeg = robotState.getAlliance().goalPose.minus(presetPose).getAsVector().getTheta() + Math.PI;
-                targetDeg = Math.toDegrees(targetDeg);
+                angleToGoal = robotState.getAlliance() == Alliance.BLUE ? PRESET_DEG_CLOSE_BLUE : PRESET_DEG_CLOSE_RED
+                        - Math.toDegrees(robotState.getPose().getHeading())
+                        + 180;
+                targetDeg = MathUtils.normalizeAngle(
+                        angleToGoal,
+                        false,
+                        AngleUnit.DEGREES);
                 break;
         }
 

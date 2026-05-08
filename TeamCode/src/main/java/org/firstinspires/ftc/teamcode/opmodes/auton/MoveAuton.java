@@ -46,8 +46,8 @@ public class MoveAuton extends OpMode {
 
     @Override
     public void loop() {
-        if (timer.seconds() < 1) follower.setTeleOpDrive(0.3, 0, 0, true);
-        if (timer.seconds() >= 1) follower.setTeleOpDrive(0, 0, 0, false);
+        if (timer.seconds() < 1) follower.setTeleOpDrive(0.40, 0, 0, true);
+        if (timer.seconds() >= 0.75) follower.setTeleOpDrive(0, 0, 0, false);
         follower.update();
         robotState.setPose(follower.getPose());
     }

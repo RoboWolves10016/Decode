@@ -29,8 +29,8 @@ public class Intake extends Subsystem {
 
     private static final double MAX_POS = 0.92;
     private static final double MIN_POS = 0.0;
-    private static final double IDLE_POS = 0.6;
-    private static final double INTAKE_POS = 0.39;
+    private static final double IDLE_POS = 0.65;
+    private static final double INTAKE_POS = 0.48;
 
     public static double HOLD_POS = 0.1;
     public static double FEED_POS = 0.0;
