@@ -15,6 +15,7 @@ import com.seattlesolvers.solverslib.util.Timing;
 import org.firstinspires.ftc.teamcode.util.Alliance;
 import org.firstinspires.ftc.teamcode.util.Pattern;
 import org.firstinspires.ftc.teamcode.util.SpindexerSlot;
+import org.firstinspires.ftc.teamcode.util.VisionPose;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -46,6 +47,8 @@ public class RobotState {
 
     @Setter
     private double angularVelocity = 0;
+//    @Setter
+//    private double angularAcceleration = 0;
 
     private Pose futurePose;
     {
@@ -66,7 +69,7 @@ public class RobotState {
     private Vector futureVectorToGoal;
 
     @Setter @Nullable
-    private Pose visionPose = null;
+    private VisionPose visionPose = null;
 
     @Setter
     private boolean notMoving = true;
@@ -78,6 +81,10 @@ public class RobotState {
 
     @Setter
     private boolean isIndexerLoaded = false;
+    @Setter
+    private boolean isIntakeFull = false;
+    @Setter
+    private boolean has3Balls = false;
     @Setter
     private boolean isFull = false;
 
@@ -105,7 +112,7 @@ public class RobotState {
         telemetry.addData("Goal Pose", poseToString(alliance.goalPose));
         telemetry.addData("Heading Initialized", headingInitialized);
         telemetry.addData("Use Limelight", limelightEnabled);
-        telemetry.addData("Vision Pose", visionPose == null ? "None" : poseToString(visionPose));
+        telemetry.addData("Vision Pose", visionPose == null ? "None" : poseToString(visionPose.pose));
         telemetry.addData("Vector to Goal", vectorToGoal == null ? "None" : vectorToString(vectorToGoal));
         telemetry.addData("Distance to Goal", vectorToGoal == null ? "None" : vectorToGoal.getMagnitude());
         telemetry.addData("LauncherReady", launcherReady);

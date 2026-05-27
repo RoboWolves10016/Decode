@@ -13,6 +13,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.RobotState;
 import org.firstinspires.ftc.teamcode.util.Pattern;
 import org.firstinspires.ftc.teamcode.util.PoseUtils;
+import org.firstinspires.ftc.teamcode.util.VisionPose;
 
 import lombok.Getter;
 
@@ -25,7 +26,7 @@ public class Limelight extends Subsystem {
     private final ElapsedTime timeSinceLastPose;
 
     private Limelight3A limelight;
-    private Pose pose = new Pose(0,0,0);
+    private VisionPose visionPose = new VisionPose(new Pose(),0);
 
     private boolean valid = false;
     private LLResult result;
@@ -68,7 +69,16 @@ public class Limelight extends Subsystem {
                 if (robotState.isHeadingInitialized()) {
 //                    pose = PoseUtils.fromPose3d(result.getBotpose_MT2());
                 } else {
-                    pose = PoseUtils.fromPose3d(result.getBotpose());
+                    long latencyNs = (long) (
+                            result.getCaptureLatency()
+                                    + result.getTargetingLatency()
+                                    + result.getParseLatency()
+                    ) * 1_000_000L;
+                    visionPose = new VisionPose(
+                            PoseUtils.fromPose3d(result.getBotpose()),
+                            result.getControlHubTimeStampNanos()
+                                    - latencyNs
+                    );
                 }
             }
 
@@ -93,13 +103,14 @@ public class Limelight extends Subsystem {
         updateTelemetry();
 
         // Update state variables so other subsystems can access data
-        robotState.setVisionPose(valid ? pose : null);
+        robotState.setVisionPose(valid ? visionPose : null);
     }
 
     @Override
     public void updateTelemetry() {
         telemetry.addLine("--------------LIMELIGHT--------------");
-        telemetry.addData("Pose", PoseUtils.poseToString(pose));
+        telemetry.addData("Pose", PoseUtils.poseToString(visionPose.pose));
+        telemetry.addData("Pose Timestamp (ms)", visionPose.timestampNs / Math.pow(10d, 6));
         telemetry.addData("Is Pose Valid", valid);
         telemetry.addData("Time Since Last Pose", timeSinceLastPose.seconds());
         telemetry.addData("FPS", status.getFps());
@@ -112,8 +123,9 @@ public class Limelight extends Subsystem {
             if (r.getFiducialId() == 20 || r.getFiducialId() == 24) tagIdCheck = true;
         }
         return result.isValid()
+                && result.getBotpose().getPosition().z < 0.3
                 && result.getBotposeAvgArea() > 0.25
-                && tagIdCheck && PoseUtils.isInField(pose)
+                && tagIdCheck && PoseUtils.isInField(visionPose.pose)
                 && robotState.isNotMoving();
     }
 

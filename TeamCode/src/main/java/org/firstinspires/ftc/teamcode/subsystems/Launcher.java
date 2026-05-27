@@ -19,6 +19,8 @@ public class Launcher extends Subsystem {
     private Hood hood;
     private Turret turret;
 
+    public static boolean isReadyOverride = false;
+
 //    private enum LauncherState {
 //        IDLE,
 //        SPINNING_UP,
@@ -55,7 +57,7 @@ public class Launcher extends Subsystem {
             case IDLE:
                 flywheel.setIdle();
                 hood.setIdle();
-                turret.setIdle();
+                turret.setAiming();
                 break;
             case ACTIVE:
                 flywheel.setAuto();
@@ -68,7 +70,11 @@ public class Launcher extends Subsystem {
                 turret.setPreset();
         }
 
-        robotState.setLauncherReady(turret.isAligned() && flywheel.isReady());
+        robotState.setLauncherReady(
+                (wantedState != LauncherWantedState.IDLE
+                        && turret.isAligned()
+                        && flywheel.isReady()
+                ) || isReadyOverride);
 
         flywheel.run();
         hood.run();

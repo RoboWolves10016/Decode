@@ -9,6 +9,8 @@ import org.firstinspires.ftc.teamcode.Tuning;
 import org.firstinspires.ftc.teamcode.util.Alliance;
 import org.firstinspires.ftc.teamcode.util.Interpolation;
 import com.bylazar.telemetry.TelemetryManager;
+import com.qualcomm.robotcore.hardware.AnalogInput;
+import com.qualcomm.robotcore.hardware.AnalogSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.seattlesolvers.solverslib.controller.PIDFController;
 import com.seattlesolvers.solverslib.controller.wpilibcontroller.SimpleMotorFeedforward;
@@ -31,6 +33,8 @@ public class Flywheel extends Subsystem {
     private MotorEx motor2;
     private MotorGroup motors;
 
+    private AnalogInput floodgate;
+
     private final PIDFController velocityController = new PIDFController(0, 0, 0, 0);
 
     private SimpleMotorFeedforward feedforward = new SimpleMotorFeedforward(0, 0, 0);
@@ -40,11 +44,14 @@ public class Flywheel extends Subsystem {
     public static double manualDutyCycle = 0.0;
     public static double manualRpm = 0;
     public static double additionalRpm = 0;
-    public static boolean useIdleRpm = false;
+    public static boolean useIdleRpm = true;
     private double targetRpm = 0;
+    private double motorOutput = 0.0;
     private double currentRpm = 0;
     private double currentAccel = 0;
     private double distanceToGoal = 0;
+
+    private double floodgateCurrent = 0.0;
 
 //    public static double kP = 0.002;
 //    public static double kI = 0.005;
@@ -81,21 +88,25 @@ public class Flywheel extends Subsystem {
 
         motor2 = new MotorEx(hwMap, "Launcher2", Motor.GoBILDA.BARE);
         motor2.setInverted(false);
-        motor2.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        motor2.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
         motor2.setRunMode(Motor.RunMode.RawPower);
 
         motors = new MotorGroup(motor1, motor2);
         motors.setRunMode(Motor.RunMode.RawPower);
         velocityController.setPIDF(kP, kI, kD, 0);
         feedforward = new SimpleMotorFeedforward(kS, kV, kA);
+
+        floodgate = hwMap.get(AnalogInput.class, "Floodgate");
+
     }
 
     @Override
     public void run() {
+        floodgateCurrent = 40 * (floodgate.getVoltage() / 3.3);
         distanceToGoal = robotState.getVectorToGoal().getMagnitude();
         switch (state) {
             case IDLE:
-                if (useIdleRpm) targetRpm = LauncherConstants.SHOT_SPEEDS[LauncherConstants.SHOT_SPEEDS.length / 2];
+                if (useIdleRpm) targetRpm = 2200;
                 else targetRpm = 0;
                 break;
             case AUTO:
@@ -118,10 +129,9 @@ public class Flywheel extends Subsystem {
         currentRpm = (motor1.getCorrectedVelocity() / 28) * 60;
 
 
-        double output = MathUtils.clamp(velocityController.calculate(currentRpm, targetRpm) + feedforward.calculate(targetRpm, motor1.getAcceleration()), 0.0, 1.0);
-        if (useManualDutyCycle) output = manualDutyCycle;
-        telemetry.addData("MotorOutput", output);
-        motors.set(output);
+        motorOutput = MathUtils.clamp(velocityController.calculate(currentRpm, targetRpm) + feedforward.calculate(targetRpm, motor1.getAcceleration()), 0.0, 1.0);
+        if (useManualDutyCycle) motorOutput = manualDutyCycle;
+        motors.set(motorOutput);
 
 //        robotState.setLauncherReady(
 //                Math.abs(currentRpm - targetRpm) < 65
@@ -134,6 +144,8 @@ public class Flywheel extends Subsystem {
         telemetry.addData("Distance to Goal", distanceToGoal);
         telemetry.addData("Current RPM", currentRpm);
         telemetry.addData("Current Accel", currentAccel);
+        telemetry.addData("Motor Output", motorOutput);
+        telemetry.addData("Floodgate Current", floodgateCurrent);
         telemetry.addData("Target RPM", targetRpm);
         telemetry.addData("State", state);
 

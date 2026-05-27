@@ -114,7 +114,6 @@ public class Close6 extends OpMode {
                 if (stateTimer.seconds() > 1) {
                     launcher.setIdle();
                     intake.setWantedState(Intake.IntakeWantedState.INTAKE);
-                    indexer.setWantedState(Indexer.IndexerWantedState.INTAKE);
                     follower.followPath(launchToRow1);
                     advanceAutonState();
                 }
@@ -142,7 +141,6 @@ public class Close6 extends OpMode {
                 if (stateTimer.seconds() > 1) {
                     launcher.setIdle();
                     intake.setWantedState(Intake.IntakeWantedState.INTAKE);
-                    indexer.setWantedState(Indexer.IndexerWantedState.INTAKE);
                     follower.followPath(launchToRow2);
                     ++numCycles;
                     advanceAutonState();
@@ -171,7 +169,6 @@ public class Close6 extends OpMode {
                 if (stateTimer.seconds() > 1) {
                     launcher.setIdle();
                     intake.setWantedState(Intake.IntakeWantedState.INTAKE);
-                    indexer.setWantedState(Indexer.IndexerWantedState.INTAKE);
 //                    follower.followPath(launchToCorner2);
                     if (numCycles < 3) {
 //                        follower.followPath(launchToCorner2);

@@ -3,7 +3,10 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.hardware.motors.Motor;
 import com.seattlesolvers.solverslib.hardware.motors.MotorEx;
 import com.seattlesolvers.solverslib.hardware.servos.ServoEx;
@@ -23,16 +26,19 @@ public class Intake extends Subsystem {
     private final RobotState robotState;
     private MotorEx intakeMotor;
     private ServoEx servo;
-
-    private Debouncer currentDebouncer = new Debouncer(0.3);
-
+    private DigitalChannel sensor;
+    private ServoEx leftLight;
+    private boolean sensorTripped = false;
+    private final Debouncer debouncer = new Debouncer(0.1, Debouncer.DebounceType.Rising);
+    private boolean debouncedSensorTripped;
 
     private static final double MAX_POS = 0.92;
     private static final double MIN_POS = 0.0;
     private static final double IDLE_POS = 0.65;
-    private static final double INTAKE_POS = 0.48;
+    private static final double INTAKE_POS = 0.5;
 
-    public static double HOLD_POS = 0.1;
+//    public static double HOLD_POS = 0.1;
+    public static double HOLD_POS = 0.3;
     public static double FEED_POS = 0.0;
     private static final double INTAKE_POWER = 1.0;
     private static final double EXHAUST_POWER = -0.5;
@@ -45,13 +51,15 @@ public class Intake extends Subsystem {
 
     private double posTweak = 0.00;
     private boolean isOverCurrent = false;
+    private final ElapsedTime stateTimer = new ElapsedTime();
 
     private enum IntakeState {
         IDLE(0, IDLE_POS),
         INTAKE(INTAKE_POWER, INTAKE_POS),
-        FULL(0.15, HOLD_POS),
+        INDEX(-0.2, HOLD_POS),
+        FULL(0, HOLD_POS),
         EXHAUST(EXHAUST_POWER, IDLE_POS),
-        FEED(FEED_POWER, INTAKE_POS);
+        FEED(FEED_POWER, 0.18);
 
         public final double speed;
         public final double pos;
@@ -90,11 +98,16 @@ public class Intake extends Subsystem {
         intakeMotor.setCachingTolerance(0.01);
         intakeMotor.setCurrentAlert(6, CurrentUnit.AMPS);
 
+        sensor = hwMap.get(DigitalChannel.class, "IntakeSensor");
+
+        leftLight = new ServoEx(hwMap, "LeftLight");
     }
 
     @Override
     public void run() {
-        isOverCurrent = currentDebouncer.calculate(intakeMotor.isOverCurrent());
+        sensorTripped = !sensor.getState();
+        debouncedSensorTripped = debouncer.calculate(sensorTripped);
+        IntakeState lastState = currentState;
 
         switch (currentState) {
             case IDLE:
@@ -103,20 +116,25 @@ public class Intake extends Subsystem {
             case INTAKE:
                 currentState = handleIntake(wantedState);
                 break;
+            case INDEX:
+                currentState = handleIndex();
+                break;
+            case FULL:
+                currentState = handleFull(wantedState);
+                break;
             case EXHAUST:
                 currentState = handleExhaust(wantedState);
                 break;
             case FEED:
                 currentState = handleFeed(wantedState);
                 break;
-            case FULL:
-                currentState = handleFull(wantedState);
-                break;
         }
+        if (currentState != lastState) stateTimer.reset();
 
         // Set outputs
         intakeMotor.set(useManualPower ? manualPower : currentState.speed);
         servo.set(MathUtils.clamp(manualServoOverride ? manualPos : currentState.pos + posTweak, MIN_POS, MAX_POS));
+        leftLight.set(debouncedSensorTripped ? 0.5 : 0.0);
         updateTelemetry();
     }
 
@@ -128,6 +146,7 @@ public class Intake extends Subsystem {
         telemetry.addData("Pos Tweak", posTweak);
         telemetry.addData("Speed", currentState.speed);
         telemetry.addData("Above 6A?", isOverCurrent);
+        telemetry.addData("Sensor Tripped", sensorTripped);
     }
 
     @Override
@@ -146,7 +165,13 @@ public class Intake extends Subsystem {
 
     private IntakeState handleIntake(IntakeWantedState ws) {
         switch (ws) {
-            case INTAKE: return IntakeState.INTAKE;
+            case INTAKE:
+                if (robotState.isIndexerLoaded() && debouncedSensorTripped) {
+                    stateTimer.reset();
+                    robotState.setIntakeFull(true);
+                    return IntakeState.INDEX;
+                }
+                return IntakeState.INTAKE;
             case EXHAUST: return IntakeState.EXHAUST;
             case IDLE: return IntakeState.IDLE;
             case LAUNCH: return robotState.isLauncherReady() ? IntakeState.FEED : IntakeState.INTAKE;
@@ -154,7 +179,14 @@ public class Intake extends Subsystem {
         return IntakeState.INTAKE; // unreachable
     }
 
+    private IntakeState handleIndex() {
+        if (!debouncedSensorTripped) return IntakeState.INTAKE;
+        if (stateTimer.seconds() > LauncherConstants.INDEX_TIME) return IntakeState.FULL;
+        return IntakeState.INDEX;
+    }
+
     private IntakeState handleFull(IntakeWantedState ws) {
+        if (!debouncedSensorTripped) return IntakeState.INTAKE;
         switch (ws) {
             case EXHAUST: return IntakeState.EXHAUST;
             case LAUNCH: return robotState.isLauncherReady() ? IntakeState.FEED : IntakeState.FULL;
@@ -163,6 +195,7 @@ public class Intake extends Subsystem {
     }
 
     private IntakeState handleExhaust(IntakeWantedState ws) {
+        robotState.setIntakeFull(false);
         switch (ws) {
             case INTAKE: return IntakeState.INTAKE;
             case EXHAUST: return IntakeState.EXHAUST;
@@ -172,6 +205,7 @@ public class Intake extends Subsystem {
     }
 
     private IntakeState handleFeed(IntakeWantedState ws) {
+        robotState.setIntakeFull(false);
         switch (ws) {
             case IDLE: return IntakeState.IDLE;
             case LAUNCH: return IntakeState.FEED;

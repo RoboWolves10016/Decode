@@ -120,7 +120,6 @@ public class Far18 extends OpMode {
                 if (stateTimer.seconds() > 1) {
                     launcher.setIdle();
                     intake.setWantedState(Intake.IntakeWantedState.INTAKE);
-                    indexer.setWantedState(Indexer.IndexerWantedState.INTAKE);
                     follower.followPath(FarAutonPaths.launchToRow3);
                     ++numCycles;
                     advanceAutonState();
@@ -151,7 +150,6 @@ public class Far18 extends OpMode {
                 if (stateTimer.seconds() > 1) {
                     launcher.setIdle();
                     intake.setWantedState(Intake.IntakeWantedState.INTAKE);
-                    indexer.setWantedState(Indexer.IndexerWantedState.INTAKE);
                     ++numCycles;
                     follower.followPath(numCycles % 2 == 0 ? FarAutonPaths.launchToCorner2 : FarAutonPaths.launchToCorner3);
                     advanceAutonState();

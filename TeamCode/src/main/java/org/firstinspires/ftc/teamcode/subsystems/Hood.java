@@ -83,9 +83,10 @@ public class Hood extends Subsystem{
 
         targetPos = angleToPos(targetDeg);
 
-        if (Math.abs(targetDeg - hoodPosition) > 3 + ((TOP_HOOD_ANGLE - BOTTOM_HOOD_ANGLE) / 2))
-            targetPos = (TOP_HOOD_POS + BOTTOM_HOOD_POS) / 2;
+//        if (Math.abs(targetDeg - hoodPosition) > 3 + ((TOP_HOOD_ANGLE - BOTTOM_HOOD_ANGLE) / 2))
+//            targetPos = (TOP_HOOD_POS + BOTTOM_HOOD_POS) / 2;
 
+//        targetPos = manualOverrideDeg;
         servo.set(targetPos);
         updateTelemetry();
     }

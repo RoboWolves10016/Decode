@@ -9,24 +9,22 @@ import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.control.PIDFCoefficients;
 import com.pedropathing.control.PIDFController;
 import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.BezierLine;
+import com.pedropathing.ftc.FollowerBuilder;
+import com.pedropathing.ftc.localization.localizers.PinpointLocalizer;
 import com.pedropathing.geometry.BezierPoint;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.math.MathFunctions;
 import com.pedropathing.math.Vector;
-import com.pedropathing.paths.HeadingInterpolator;
-import com.pedropathing.paths.Path;
-import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.seattlesolvers.solverslib.controller.PIDController;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 import com.seattlesolvers.solverslib.util.MathUtils;
 
 import org.firstinspires.ftc.teamcode.Constants;
 import org.firstinspires.ftc.teamcode.RobotState;
-import org.firstinspires.ftc.teamcode.pedropathing.Tuning;
+import org.firstinspires.ftc.teamcode.pedropathing.FusionLocalizer;
 import org.firstinspires.ftc.teamcode.util.Interpolation;
+import org.firstinspires.ftc.teamcode.util.VisionPose;
 
 import lombok.Getter;
 
@@ -35,9 +33,13 @@ public class Drive extends Subsystem{
     private final TelemetryManager telemetry;
 
     @Getter
-    public Follower follower;
+    private Follower follower;
 
-    private RobotState robotState;
+    private final RobotState robotState;
+
+    private final FusionLocalizer fusion;
+    public static double xyVarianceIn2 = 0;
+    public static double thetaVarianceRad2 = 0;
 
     private boolean teleop = false;
     private boolean robotCentric = false;
@@ -62,7 +64,19 @@ public class Drive extends Subsystem{
 
     public Drive(HardwareMap hwMap, GamepadEx driver) {
         this.telemetry = PanelsTelemetry.INSTANCE.getTelemetry();
-        this.follower = Constants.createFollower(hwMap);
+        this.fusion = new FusionLocalizer(
+                new PinpointLocalizer(hwMap, Constants.pinpointConstants),
+                new Pose(0.25, 0.25, Math.toRadians(2)),
+                new Pose(1, 1, Math.toRadians(0.5) / 60),
+                new Pose(2.1561, 2.6065, 0.0248),
+                100
+        );
+        this.follower = new FollowerBuilder(Constants.followerConstants, hwMap)
+                .pathConstraints(Constants.pathConstraints)
+                .mecanumDrivetrain(Constants.mecanumConstants)
+//                .setLocalizer(fusion)
+                .pinpointLocalizer(Constants.pinpointConstants)
+                .build();
         this.robotState = RobotState.getInstance();
         this.driver = driver;
     }
@@ -94,9 +108,13 @@ public class Drive extends Subsystem{
         robotState.setAngularVelocity(follower.getAngularVelocity());
 
         // Accept vision pose if it is valid
-        Pose visionPose = robotState.getVisionPose();
+        VisionPose visionPose = robotState.getVisionPose();
         if (visionPose != null && robotState.isLimelightEnabled() && !autoAim) {
-            follower.setPose(visionPose);
+            follower.setPose(visionPose.pose);
+//            fusion.addMeasurement(
+//                    visionPose.pose,
+//                    visionPose.timestampNs,
+//                    new Pose(xyVarianceIn2, xyVarianceIn2, thetaVarianceRad2));
             if (robotState.isAuton()) {
                 // Only use one pose at a time if in auton
                 robotState.setLimelightEnabled(false);

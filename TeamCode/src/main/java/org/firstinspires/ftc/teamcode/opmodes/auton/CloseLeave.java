@@ -110,7 +110,6 @@ public class CloseLeave extends OpMode {
                 if (stateTimer.seconds() > 2) {
                     launcher.setIdle();
                     intake.setWantedState(Intake.IntakeWantedState.INTAKE);
-                    indexer.setWantedState(Indexer.IndexerWantedState.INTAKE);
                     advanceAutonState();
                 }
                 break;

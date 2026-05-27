@@ -7,9 +7,11 @@ import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.seattlesolvers.solverslib.controller.PIDFController;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.hardware.motors.Motor;
 import com.seattlesolvers.solverslib.hardware.motors.MotorEx;
+import com.seattlesolvers.solverslib.hardware.servos.ServoEx;
 import com.seattlesolvers.solverslib.util.Debouncer;
 
 import org.firstinspires.ftc.teamcode.RobotState;
@@ -25,14 +27,15 @@ public class Indexer extends Subsystem{
     private MotorEx motor;
     private DigitalChannel sensor;
     private boolean sensorTripped = false;
-    private final Debouncer debouncer = new Debouncer(0.2, Debouncer.DebounceType.Falling);
+    private final Debouncer debouncer = new Debouncer(0.1, Debouncer.DebounceType.Rising);
     private boolean debouncedSensorTripped;
+
+    private ServoEx rightLight;
 
     public static double holdKP = 0.001;
 
-    public static double intakePower = 0.3;
-    public static double inchPower = 0.0;
     public static double holdPower = -0.22;
+    public static double indexPower = -0.4;
     public static double closeFeedPower = 0.8;
     public static double farFeedPower = 0.4;
 
@@ -41,7 +44,9 @@ public class Indexer extends Subsystem{
 //    private PIDFController controller;
 
     public static double motorHoldPos = 0.0;
-    private double motorThrottle = 0.0;
+
+    private final ElapsedTime indexTimer = new ElapsedTime();
+    private double dutyCycle = 0.0;
 
     public enum IndexerWantedState {
         IDLE,
@@ -51,11 +56,13 @@ public class Indexer extends Subsystem{
     }
 
     private enum IndexerState {
-        IDLE(0.0), // 0
-        INTAKE(intakePower), // 1
-        INCH(holdPower),
-        HOLD(holdPower),
-        FEED(closeFeedPower),
+        IDLE(holdPower),
+//        INTAKE(-0.2),
+        HAS_2(holdPower),
+        INDEX(indexPower),
+        FULL(holdPower),
+//        FEED(closeFeedPower),
+        FEED(1.0),
         EXHAUST(-1.0);
 
         public double dutyCycle;
@@ -87,35 +94,64 @@ public class Indexer extends Subsystem{
 
         sensor = hwMap.get(DigitalChannel.class, "RampSensor");
         sensor.setMode(DigitalChannel.Mode.INPUT);
+
+        rightLight = new ServoEx(hwMap, "RightLight");
     }
 
     @Override
     public void run() {
         sensorTripped = !sensor.getState(); // Returns whether there is an object blocking the beam
         debouncedSensorTripped = debouncer.calculate(sensorTripped);
+        rightLight.set(debouncedSensorTripped ? 0.5 : 0.0);
 
         if (robotState.getPose().getY() < 72) IndexerState.FEED.dutyCycle = farFeedPower;
         else IndexerState.FEED.dutyCycle = closeFeedPower;
 
         previousState = currentState;
-        switch (currentState) {
-            case INTAKE:
-                currentState = handleIntake(wantedState);
+        if (wantedState == IndexerWantedState.EXHAUST) {
+            currentState = IndexerState.EXHAUST;
+            robotState.setIndexerLoaded(false);
+            robotState.setHas3Balls(false);
+            robotState.setFull(false);
+        } else if (wantedState == IndexerWantedState.LAUNCH && robotState.isLauncherReady()) {
+            currentState = IndexerState.FEED;
+            robotState.setIndexerLoaded(false);
+            robotState.setHas3Balls(false);
+            robotState.setFull(false);
+        } else switch (currentState) {
+            case IDLE:
+                if (debouncedSensorTripped) {
+                    currentState = IndexerState.HAS_2;
+                    robotState.setIndexerLoaded(true);
+                }
                 break;
-            case INCH:
-                currentState = handleInch(wantedState);
+            case HAS_2:
+                if (robotState.isIntakeFull()) {
+                    currentState = IndexerState.INDEX;
+                    indexTimer.reset();
+                }
                 break;
-            case HOLD:
-                currentState = handleHold(wantedState);
-                break;
+            case INDEX:
+                if (indexTimer.seconds() > LauncherConstants.INDEX_TIME) {
+                    robotState.setHas3Balls(true);
+                    currentState = IndexerState.FULL;
+                }
+            case FULL:
+
+                break; // Remain in the full state
+            case FEED:
+                if (wantedState != IndexerWantedState.LAUNCH) currentState = IndexerState.IDLE;
             default:
-                currentState = handleDefault(wantedState);
+                if (wantedState == IndexerWantedState.IDLE ) currentState = IndexerState.IDLE;
                 break;
         }
 
-//         Write outputs
-        if (useManualOverride) motor.set(manualOverrideThrottle);
-        else motor.set(currentState.dutyCycle);
+        // Write outputs
+        dutyCycle = currentState.dutyCycle;
+
+        if (useManualOverride) dutyCycle = manualOverrideThrottle;
+
+        motor.set(dutyCycle);
 
         updateTelemetry();
     }
@@ -123,11 +159,12 @@ public class Indexer extends Subsystem{
     @Override
     protected void updateTelemetry() {
         telemetry.addLine("--------------INDEXER--------------");
+        telemetry.addData("Wanted State", wantedState.toString());
         telemetry.addData("Current State", currentState.toString());
-        telemetry.addData("Duty Cycle", currentState.dutyCycle);
+        telemetry.addData("Duty Cycle", dutyCycle);
         telemetry.addData("Current Position", motor.getCurrentPosition());
         telemetry.addData("Motor RunMode", motor.motorEx.getMode().toString());
-        telemetry.addData("Sensor Tripped", sensorTripped);
+        telemetry.addData("Sensor Tripped", debouncedSensorTripped);
         telemetry.addData("Cached Hold Pos", motorHoldPos);
     }
 
@@ -135,57 +172,4 @@ public class Indexer extends Subsystem{
     void stop() {
         motor.stopMotor();
     }
-
-    private IndexerState handleDefault(IndexerWantedState ws) {
-        switch (ws) {
-            case INTAKE: return IndexerState.INTAKE;
-            case EXHAUST: return IndexerState.EXHAUST;
-            case LAUNCH: return robotState.isLauncherReady() ? IndexerState.FEED : currentState;
-            default: return IndexerState.IDLE;
-        }
-    }
-
-    private IndexerState handleIntake(IndexerWantedState ws) {
-        switch (ws) {
-            case INTAKE: {
-                if (debouncedSensorTripped) {
-                    robotState.setIndexerLoaded(true);
-                    return IndexerState.INCH;
-                }
-                return IndexerState.INTAKE;
-            }
-            case EXHAUST: return IndexerState.EXHAUST;
-            case LAUNCH: return robotState.isLauncherReady() ? IndexerState.FEED : IndexerState.INTAKE;
-            default: return IndexerState.IDLE;
-        }
-    }
-
-    private IndexerState handleInch(IndexerWantedState ws) {
-        if (ws == IndexerWantedState.LAUNCH)
-            return robotState.isLauncherReady()
-                ? IndexerState.FEED
-                : IndexerState.INCH;
-        if (ws == IndexerWantedState.EXHAUST) return IndexerState.EXHAUST;
-        if (!debouncedSensorTripped) {
-            // If sensor is no longer tripped, ball has reached hold position
-            motorHoldPos = motor.getCurrentPosition();
-            return IndexerState.HOLD;
-        }
-        return IndexerState.INCH;
-    }
-
-    private IndexerState handleHold(IndexerWantedState ws) {
-        switch (ws) {
-            case LAUNCH: {
-                if (robotState.isLauncherReady()) {
-                    robotState.setIndexerLoaded(false);
-                    return IndexerState.FEED;
-                }
-                return IndexerState.HOLD;
-            }
-            case EXHAUST: return IndexerState.EXHAUST;
-            default: return IndexerState.HOLD;
-        }
-    }
-
 }
