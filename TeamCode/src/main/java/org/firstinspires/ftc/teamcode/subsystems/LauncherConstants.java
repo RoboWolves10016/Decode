@@ -7,9 +7,12 @@ public class LauncherConstants {
     // Indexing Constants
     public static double INDEX_TIME = 0.5;
     // Flywheel Constants
-    public static final double[] SHOT_DISTANCES = {24, 32, 40, 52, 64, 75, 85, 95, 110, 130, 140, 150};
-    public static final double[] SHOT_SPEEDS = {2600, 2600, 2700, 2800, 3000, 3050, 3200, 3350, 3500, 3850, 4000, 4150};
+//    public static final double[] SHOT_DISTANCES = {24, 32, 40, 52, 64, 75, 85, 95, 110, 130, 140, 150};
+//    public static final double[] SHOT_SPEEDS = {2600, 2600, 2700, 2800, 3000, 3050, 3200, 3350, 3500, 3850, 4000, 4150};
     public static final double[] AIR_TIMES = {0.5, 0.5, 0.5, 0.6, 0.75, 0.8, 0.85, 1.0, 1.1, 1.2};
+
+    public static final double[] SHOT_DISTANCES = {24, 32, 40, 52, 64, 94, 101, 119, 129, 140, 157};
+    public static final double[] SHOT_SPEEDS = {2600, 2600, 2700, 2800, 3100, 3280, 3560, 3860, 4075, 4150, 4400};
 
     // Turret Constants
     public static final double RIGHT_TURRET_POS = 0.258;
@@ -34,8 +37,8 @@ public class LauncherConstants {
     public static final double TURRET_CACHING_TOL_DEG = 0.5;
 
     // Hood Constants
-//    public static final double[] SHOT_ANGLES = {22, 25, 26, 30, 32, 35, 37, 39, 43, 45, 47};
-    public static final double[] SHOT_ANGLES = {22, 25, 26, 30, 32, 38, 39.5, 41, 43, 45, 47, 47};
+//    public static final double[] SHOT_ANGLES = {22, 25, 26, 30, 32, 38, 39.5, 41, 43, 45, 47, 47};
+    public static final double[] SHOT_ANGLES = {22, 25, 26, 30, 43, 45, 48, 50, 52, 52, 54};
     public static final double BOTTOM_HOOD_POS = 0.985;
 //    public static final double BOTTOM_HOOD_ANGLE = 22d;
     public static final double BOTTOM_HOOD_ANGLE = 32d;

@@ -31,6 +31,7 @@ public class Turret extends Subsystem {
 
     public static boolean useManualOverride = false;
     public static double manualOverrideDegrees = 0d;
+    public static boolean isAimedOverride = false;
 
     private double angleToGoal = 0;
     private double targetDeg = 0;
@@ -176,10 +177,10 @@ public class Turret extends Subsystem {
     }
 
     public boolean isAligned() {
-//        return Math.abs(targetDeg - encoderDeg) < 3
-//                && angleToGoal < MAX_TURRET_ANGLE_LIMIT
-//                && angleToGoal > MIN_TURRET_ANGLE_LIMIT;
-        return true;
+        return isAimedOverride|| (Math.abs(targetDeg - encoderDeg) < 5
+                && angleToGoal < MAX_TURRET_ANGLE_LIMIT
+                && angleToGoal > MIN_TURRET_ANGLE_LIMIT);
+//        return true;
     }
 
     private double analogToAngle(double analogValue) {

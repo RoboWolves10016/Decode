@@ -41,6 +41,7 @@ public class Indexer extends Subsystem{
 
     public static boolean useManualOverride = false;
     public static double manualOverrideThrottle = 0.0;
+    private boolean forceFeed = false;
 //    private PIDFController controller;
 
     public static double motorHoldPos = 0.0;
@@ -112,12 +113,12 @@ public class Indexer extends Subsystem{
             currentState = IndexerState.EXHAUST;
             robotState.setIndexerLoaded(false);
             robotState.setHas3Balls(false);
-            robotState.setFull(false);
-        } else if (wantedState == IndexerWantedState.LAUNCH && robotState.isLauncherReady()) {
+        } else if (wantedState == IndexerWantedState.LAUNCH && (forceFeed || (
+                robotState.isLauncherReady()
+                && robotState.getVelocity().getMagnitude() < 7))) {
             currentState = IndexerState.FEED;
             robotState.setIndexerLoaded(false);
             robotState.setHas3Balls(false);
-            robotState.setFull(false);
         } else switch (currentState) {
             case IDLE:
                 if (debouncedSensorTripped) {
@@ -154,6 +155,14 @@ public class Indexer extends Subsystem{
         motor.set(dutyCycle);
 
         updateTelemetry();
+    }
+
+    public void forceFeed() {
+        forceFeed = true;
+    }
+
+    public void stopForceFeed() {
+        forceFeed = false;
     }
 
     @Override

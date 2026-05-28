@@ -22,7 +22,10 @@ public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
             .mass(12.38)
             .headingPIDFCoefficients(new PIDFCoefficients(1.0,0,0.05,0.01))
-            .predictiveBrakingCoefficients(new PredictiveBrakingCoefficients(0.04, 0.139333365, 0.000210842))
+            .predictiveBrakingCoefficients(new PredictiveBrakingCoefficients(
+                    0.04,
+                    0.139333365,
+                    0.000210842))
             .centripetalScaling(0);
 
     public static MecanumConstants mecanumConstants =  new MecanumConstants()

@@ -47,6 +47,8 @@ public class RobotState {
 
     @Setter
     private double angularVelocity = 0;
+    @Setter
+    private Vector velocity;
 //    @Setter
 //    private double angularAcceleration = 0;
 
@@ -63,6 +65,10 @@ public class RobotState {
     public void setFuturePose(Pose pose) {
         this.futurePose = pose;
         this.futureVectorToGoal = alliance.goalPose.minus(futurePose).getAsVector();
+    }
+
+    public boolean isFull() {
+        return isIndexerLoaded && isIntakeFull;
     }
 
     private Vector vectorToGoal;
@@ -85,8 +91,6 @@ public class RobotState {
     private boolean isIntakeFull = false;
     @Setter
     private boolean has3Balls = false;
-    @Setter
-    private boolean isFull = false;
 
     @Setter
     boolean headingInitialized = false;
@@ -108,6 +112,9 @@ public class RobotState {
         telemetry.addData("Alliance", alliance.toString());
         telemetry.addData("Pattern", pattern.toString());
         telemetry.addData("Pose", poseToString(pose));
+        telemetry.addData("Velocity", velocity == null
+                ? "None"
+                : "(" + velocity.getXComponent() + ", " + velocity.getYComponent() + ")");
         telemetry.addData("Future Pose", poseToString(futurePose));
         telemetry.addData("Goal Pose", poseToString(alliance.goalPose));
         telemetry.addData("Heading Initialized", headingInitialized);

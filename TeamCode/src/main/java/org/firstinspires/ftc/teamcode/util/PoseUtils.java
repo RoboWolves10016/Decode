@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.util;
 
 import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.FuturePose;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.math.Vector;
 

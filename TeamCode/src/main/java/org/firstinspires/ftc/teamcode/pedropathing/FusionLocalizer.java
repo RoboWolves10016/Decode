@@ -14,7 +14,8 @@ public class FusionLocalizer implements Localizer {
     private Pose currentPosition;
     private Pose currentVelocity;
     private Matrix P; //State Covariance
-    private final Matrix Q; //Process Noise Covariance
+//    private final Matrix Q; //Process Noise Covariance
+    private Matrix Q; //Process Noise Covariance
     private final Matrix R; //Measurement Noise Covariance
     private long lastUpdateTime = -1;
     private final NavigableMap<Long, Pose> poseHistory = new TreeMap<>();
@@ -38,6 +39,11 @@ public class FusionLocalizer implements Localizer {
         this.R = Matrix.diag(measurementVariance.getX(), measurementVariance.getY(), measurementVariance.getHeading());
         this.bufferSize = bufferSize;
         twistHistory.put(0L, new Pose());
+    }
+
+    public void setProcessVariance(Pose processCovariances) {
+        this.Q = Matrix.diag(processCovariances.getX(), processCovariances.getY(), processCovariances.getHeading());
+
     }
 
     @Override

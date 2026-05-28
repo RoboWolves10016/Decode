@@ -21,10 +21,8 @@ import org.firstinspires.ftc.teamcode.util.Alliance;
 @Autonomous(name="Far 18")
 public class Far18 extends OpMode {
     private final RobotState robotState = RobotState.getInstance();
-    private final ElapsedTime fullTimer = new ElapsedTime();
     private final ElapsedTime stateTimer = new ElapsedTime();
 
-    private final Alliance alliance = Alliance.BLUE;
     TelemetryManager telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
     // Paths
     private Drive drivetrain;
@@ -77,10 +75,6 @@ public class Far18 extends OpMode {
         if (gamepad1.b) RobotState.getInstance().setAlliance(Alliance.RED);
         if (gamepad1.x) RobotState.getInstance().setAlliance(Alliance.BLUE);
 
-
-
-
-//        telemetryM.addData("Sees Pattern", limelight.isHasSeenPattern());
         telemetryM.update(telemetry);
     }
 
@@ -251,7 +245,6 @@ public class Far18 extends OpMode {
         autonState = newState;
         stateTimer.reset();
     }
-
 
 //    public void drawOnlyCurrent() {
 //        try {

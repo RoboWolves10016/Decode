@@ -1,7 +1,7 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
-import static org.firstinspires.ftc.teamcode.Tuning.AIR_TIMES;
-import static org.firstinspires.ftc.teamcode.Tuning.DISTANCES_FROM_GOAL_INCHES;
+//import static org.firstinspires.ftc.teamcode.Tuning.AIR_TIMES;
+//import static org.firstinspires.ftc.teamcode.Tuning.DISTANCES_FROM_GOAL_INCHES;
 
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.telemetry.PanelsTelemetry;
@@ -40,6 +40,9 @@ public class Drive extends Subsystem{
     private final FusionLocalizer fusion;
     public static double xyVarianceIn2 = 0;
     public static double thetaVarianceRad2 = 0;
+
+    public static double processVarianceXY = 1;
+    public static double processVarianceTheta = 1;
 
     private boolean teleop = false;
     private boolean robotCentric = false;
@@ -88,6 +91,7 @@ public class Drive extends Subsystem{
 
     @Override
     public void run() {
+        fusion.setProcessVariance(new Pose(processVarianceXY, processVarianceXY, processVarianceTheta));
         aimController.setCoefficients(new PIDFCoefficients(kP, kI, kD, kF));
 
         autoAim = driver.getButton(GamepadKeys.Button.LEFT_BUMPER);
@@ -106,6 +110,7 @@ public class Drive extends Subsystem{
                         && follower.getTeleopDriveVector().getMagnitude() < 1);
 
         robotState.setAngularVelocity(follower.getAngularVelocity());
+        robotState.setVelocity(follower.getVelocity());
 
         // Accept vision pose if it is valid
         VisionPose visionPose = robotState.getVisionPose();
@@ -126,10 +131,11 @@ public class Drive extends Subsystem{
         Vector fieldVelocity = follower.getPoseTracker().getLocalizer().getVelocityVector();
         fieldVelocity.rotateVector(follower.getHeading());
 
-        double timeGain = Interpolation.interpolate(
-                DISTANCES_FROM_GOAL_INCHES,
-                AIR_TIMES,
-                robotState.getVectorToGoal().getMagnitude());
+//        double timeGain = Interpolation.interpolate(
+//                LauncherConstants.SHOT_DISTANCES,
+//                LauncherConstants.AIR_TIMES,
+//                robotState.getVectorToGoal().getMagnitude());
+        double timeGain = 0;
         robotState.setFuturePose(robotState.getPose().plus(new Pose(
                         fieldVelocity.getXComponent() * timeGain,
                         fieldVelocity.getYComponent() * timeGain)));

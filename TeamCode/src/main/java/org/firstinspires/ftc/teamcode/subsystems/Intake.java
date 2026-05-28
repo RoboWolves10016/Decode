@@ -53,6 +53,8 @@ public class Intake extends Subsystem {
     private boolean isOverCurrent = false;
     private final ElapsedTime stateTimer = new ElapsedTime();
 
+    private boolean forceFeed = false;
+
     private enum IntakeState {
         IDLE(0, IDLE_POS),
         INTAKE(INTAKE_POWER, INTAKE_POS),
@@ -156,7 +158,8 @@ public class Intake extends Subsystem {
 
     private IntakeState handleIdle(IntakeWantedState ws) {
         switch (ws) {
-            case LAUNCH: return robotState.isLauncherReady() ? IntakeState.FEED : IntakeState.IDLE;
+            case LAUNCH: return forceFeed || (robotState.isLauncherReady() && robotState.getVelocity().getMagnitude() < 7)
+                    ? IntakeState.FEED : IntakeState.IDLE;
             case INTAKE: return IntakeState.INTAKE;
             case EXHAUST: return IntakeState.EXHAUST;
             default: return IntakeState.IDLE;
@@ -174,7 +177,8 @@ public class Intake extends Subsystem {
                 return IntakeState.INTAKE;
             case EXHAUST: return IntakeState.EXHAUST;
             case IDLE: return IntakeState.IDLE;
-            case LAUNCH: return robotState.isLauncherReady() ? IntakeState.FEED : IntakeState.INTAKE;
+            case LAUNCH: return forceFeed || (robotState.isLauncherReady() && robotState.getVelocity().getMagnitude() < 7)
+                    ? IntakeState.FEED : IntakeState.INTAKE;
         }
         return IntakeState.INTAKE; // unreachable
     }
@@ -189,7 +193,8 @@ public class Intake extends Subsystem {
         if (!debouncedSensorTripped) return IntakeState.INTAKE;
         switch (ws) {
             case EXHAUST: return IntakeState.EXHAUST;
-            case LAUNCH: return robotState.isLauncherReady() ? IntakeState.FEED : IntakeState.FULL;
+            case LAUNCH: return forceFeed || (robotState.isLauncherReady() && robotState.getVelocity().getMagnitude() < 7)
+                    ? IntakeState.FEED : IntakeState.FULL;
             default: return IntakeState.FULL;
         }
     }
@@ -199,7 +204,8 @@ public class Intake extends Subsystem {
         switch (ws) {
             case INTAKE: return IntakeState.INTAKE;
             case EXHAUST: return IntakeState.EXHAUST;
-            case LAUNCH: return robotState.isLauncherReady() ? IntakeState.FEED : IntakeState.EXHAUST;
+            case LAUNCH: return forceFeed || (robotState.isLauncherReady() && robotState.getVelocity().getMagnitude() < 7)
+                    ? IntakeState.FEED : IntakeState.EXHAUST;
             default: return IntakeState.IDLE;
         }
     }
@@ -213,6 +219,14 @@ public class Intake extends Subsystem {
             case EXHAUST: return IntakeState.EXHAUST;
         }
         return IntakeState.FEED; // unreachable
+    }
+
+    public void forceFeed() {
+        forceFeed = true;
+    }
+
+    public void stopForceFeed() {
+        forceFeed = false;
     }
 
 
