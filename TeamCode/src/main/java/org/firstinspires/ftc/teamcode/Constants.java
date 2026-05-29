@@ -58,7 +58,7 @@ public class Constants {
             0.97,
             100,
             2,
-            2);
+            3);
 
     public static Follower createFollower(HardwareMap hardwareMap) {
         return new FollowerBuilder(followerConstants, hardwareMap)

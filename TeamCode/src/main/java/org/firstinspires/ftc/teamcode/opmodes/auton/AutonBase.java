@@ -92,7 +92,7 @@ public abstract class AutonBase extends OpMode {
 
     protected void intake() {
         intake.setWantedState(Intake.IntakeWantedState.INTAKE);
-        indexer.setWantedState(Indexer.IndexerWantedState.INTAKE);
+//        indexer.setWantedState(Indexer.IndexerWantedState.INTAKE);
     }
 
     protected void launch() {

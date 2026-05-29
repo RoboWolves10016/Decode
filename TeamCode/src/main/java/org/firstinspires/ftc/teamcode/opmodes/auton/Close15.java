@@ -4,6 +4,8 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.subsystems.Flywheel;
 import org.firstinspires.ftc.teamcode.subsystems.Hood;
+import org.firstinspires.ftc.teamcode.subsystems.Turret;
+import org.firstinspires.ftc.teamcode.util.Alliance;
 
 @Autonomous(name="Close 15")
 public class Close15 extends AutonBase {
@@ -21,9 +23,9 @@ public class Close15 extends AutonBase {
 
     private CloseAutonPaths paths;
 
-    private final double shotRpm = 31;
-    private final double shotAngle = 46;
-    private final int gateCycles = 2;
+    private final double shotRpm = 3200;
+    private final double shotAngle = 47;
+    private final int gateCycles = 3;
     private final double gateTime = 2.5;
     private final double launchTime = 0.65;
 
@@ -36,8 +38,8 @@ public class Close15 extends AutonBase {
         follower.setStartingPose(paths.startPose);
         follower.setMaxPower(1.0);
 
-//        Flywheel.useManualRpm = true;
-//        Flywheel.manualRpm = shotRpm;
+        Flywheel.useManualRpm = true;
+        Flywheel.manualRpm = shotRpm;
 
         Hood.useManualOverride = true;
         Hood.manualOverrideDeg = shotAngle;
@@ -82,19 +84,24 @@ public class Close15 extends AutonBase {
                 if (stateTimer.seconds() > launchTime) {
                     stopForceLaunch();
                     intake();
-                    follower.followPath(paths.launchToGate);
-                    follower.setMaxPower(0.6);
+                    follower.followPath(paths.launchToGate1);
+//                    follower.setMaxPower(0.6);
                     advanceState();
+//                    Turret.useManualOverride = true;
+//                    Turret.manualOverrideDegrees = robotState.getAlliance() == Alliance.RED
+//                            ? -95
+//                            : 95;
                 }
                 break;
             case 6: // Drive to gate
-                if (!follower.isBusy() || robotState.isFull()) {
+                if (!follower.isBusy() || robotState.isFull() || stateTimer.seconds() > 1.5) {
+                    follower.followPath(paths.gate1ToGate2);
                     advanceState();
                 }
                 break;
             case 7: // Wait at gate
                 if (stateTimer.seconds() > gateTime || robotState.isFull()) {
-                    follower.followPath(paths.gateToLaunch);
+                    follower.followPath(paths.gate2ToLaunch);
                     advanceState();
                 }
                 break;
@@ -114,11 +121,12 @@ public class Close15 extends AutonBase {
                 break;
             case 10: // Decide where to go
                 if (gateCycleCount < gateCycles) {
-                    follower.followPath(paths.launchToGate);
+                    follower.followPath(paths.launchToGate1);
                     advanceState(6);
                 } else {
                     follower.followPath(paths.launchToRow1);
                     intake();
+//                    Turret.useManualOverride = false;
                     advanceState();
                 }
                 break;

@@ -27,7 +27,7 @@ public class Indexer extends Subsystem{
     private MotorEx motor;
     private DigitalChannel sensor;
     private boolean sensorTripped = false;
-    private final Debouncer debouncer = new Debouncer(0.1, Debouncer.DebounceType.Rising);
+//    private final Debouncer debouncer = new Debouncer(0.05, Debouncer.DebounceType.Rising);
     private boolean debouncedSensorTripped;
 
     private ServoEx rightLight;
@@ -58,7 +58,7 @@ public class Indexer extends Subsystem{
 
     private enum IndexerState {
         IDLE(holdPower),
-//        INTAKE(-0.2),
+        INTAKE(-0.4),
         HAS_2(holdPower),
         INDEX(indexPower),
         FULL(holdPower),
@@ -102,7 +102,8 @@ public class Indexer extends Subsystem{
     @Override
     public void run() {
         sensorTripped = !sensor.getState(); // Returns whether there is an object blocking the beam
-        debouncedSensorTripped = debouncer.calculate(sensorTripped);
+//        debouncedSensorTripped = debouncer.calculate(sensorTripped);
+        debouncedSensorTripped = sensorTripped;
         rightLight.set(debouncedSensorTripped ? 0.5 : 0.0);
 
         if (robotState.getPose().getY() < 72) IndexerState.FEED.dutyCycle = farFeedPower;
@@ -119,15 +120,20 @@ public class Indexer extends Subsystem{
             currentState = IndexerState.FEED;
             robotState.setIndexerLoaded(false);
             robotState.setHas3Balls(false);
+        } else if (wantedState == IndexerWantedState.INTAKE) {
+              currentState = IndexerState.INTAKE;
         } else switch (currentState) {
             case IDLE:
+            case INTAKE:
                 if (debouncedSensorTripped) {
                     currentState = IndexerState.HAS_2;
                     robotState.setIndexerLoaded(true);
                 }
                 break;
             case HAS_2:
-                if (robotState.isIntakeFull()) {
+                if (!debouncedSensorTripped) {
+                    currentState = IndexerState.IDLE;
+                } else if (robotState.isIntakeFull()) {
                     currentState = IndexerState.INDEX;
                     indexTimer.reset();
                 }
