@@ -29,13 +29,14 @@ public class Intake extends Subsystem {
     private DigitalChannel sensor;
     private ServoEx leftLight;
     private boolean sensorTripped = false;
-    private final Debouncer debouncer = new Debouncer(0.1, Debouncer.DebounceType.Rising);
+    private final Debouncer debouncer = new Debouncer(0.08, Debouncer.DebounceType.Rising);
     private boolean debouncedSensorTripped;
 
     private static final double MAX_POS = 0.92;
     private static final double MIN_POS = 0.0;
     private static final double IDLE_POS = 0.65;
     private static final double INTAKE_POS = 0.5;
+    private static final double GATE_POS = 0.35;
 
 //    public static double HOLD_POS = 0.1;
     public static double HOLD_POS = 0.3;
@@ -184,7 +185,7 @@ public class Intake extends Subsystem {
     }
 
     private IntakeState handleIndex() {
-        if (!debouncedSensorTripped) return IntakeState.INTAKE;
+        if (!debouncedSensorTripped && !robotState.isAuton()) return IntakeState.INTAKE;
         if (stateTimer.seconds() > LauncherConstants.INDEX_TIME) return IntakeState.FULL;
         return IntakeState.INDEX;
     }

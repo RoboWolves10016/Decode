@@ -25,7 +25,7 @@ import java.util.List;
 public class TeleopV2 extends OpMode {
     // These two static variables will be set in the stop() method of any auton OpMode ran before this.
     private final TelemetryManager telemetryManager = PanelsTelemetry.INSTANCE.getTelemetry();
-    RobotState robotState;
+    private RobotState robotState;
 
     private GamepadEx driver;
     private GamepadEx operator;
@@ -64,7 +64,7 @@ public class TeleopV2 extends OpMode {
 
         limelight = new Limelight(hardwareMap);
         limelight.init();
-        RobotState.getInstance().setAuton(false);
+        robotState.setAuton(false);
     }
 
     @Override

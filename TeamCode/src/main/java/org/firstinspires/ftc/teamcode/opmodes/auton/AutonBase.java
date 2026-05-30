@@ -19,6 +19,7 @@ import org.firstinspires.ftc.teamcode.util.Alliance;
 
 public abstract class AutonBase extends OpMode {
     protected final RobotState robotState = RobotState.getInstance();
+    protected final ElapsedTime autonTimer = new ElapsedTime();
     protected final ElapsedTime stateTimer = new ElapsedTime();
 
     private final TelemetryManager telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
@@ -61,7 +62,9 @@ public abstract class AutonBase extends OpMode {
 
     @Override
     public void start() {
+        robotState.setAuton(true);
         follower.activateAllPIDFs();
+        autonTimer.reset();
         stateTimer.reset();
     }
 
@@ -92,7 +95,7 @@ public abstract class AutonBase extends OpMode {
 
     protected void intake() {
         intake.setWantedState(Intake.IntakeWantedState.INTAKE);
-//        indexer.setWantedState(Indexer.IndexerWantedState.INTAKE);
+        indexer.setWantedState(Indexer.IndexerWantedState.INTAKE);
     }
 
     protected void launch() {
@@ -119,6 +122,15 @@ public abstract class AutonBase extends OpMode {
     protected void advanceState() {
         autonState = autonState + 1;
         stateTimer.reset();
+    }
+
+    protected void intakeGate() {
+        Intake.manualServoOverride = true;
+        Intake.manualPos = 0.35;
+    }
+
+    protected void stopIntakeGate() {
+        Intake.manualServoOverride = false;
     }
 
     protected void advanceState(int newState) {

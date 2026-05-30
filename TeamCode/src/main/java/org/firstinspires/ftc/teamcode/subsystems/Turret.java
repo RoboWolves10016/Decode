@@ -111,7 +111,7 @@ public class Turret extends Subsystem {
 
         vFilter.update(Math.toDegrees(robotState.getAngularVelocity()), 0);
         filteredRotVel = vFilter.getState();
-        targetDeg -= TURRET_ROT_KV * filteredRotVel;
+//        targetDeg -= TURRET_ROT_KV * filteredRotVel;
 
 //        aFilter.update(Math.toDegrees(robotState.getAngularAcceleration()), 0);
 //        filteredRotAcc = aFilter.getState();
