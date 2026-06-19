@@ -14,10 +14,10 @@ import java.util.function.Supplier;
 public class Close18 extends AutonBase {
     private CloseAutonPaths paths;
     enum Cycle {
-        ROW_1(0),
-        ROW_2(0),
-        ROW_3(0),
-        GATE(0);
+        ROW_1(11),
+        ROW_2(3),
+        ROW_3(14),
+        GATE(6);
         final int leaveShootState;
         public PathChain firstPath;
 
@@ -33,8 +33,8 @@ public class Close18 extends AutonBase {
 //    private final double shotAngle = 47;
     private final double shotRpm = 3000;
     private final double shotAngle = 41;
-    private final int gateCycles = 2;
-    private final double gateTime = 1.5;
+    private final int gateCycles = 3;
+    private final double gateTime = 2.0;
     private final double launchTime = 0.5;
 
     private int gateCycleCount = 0;
@@ -54,11 +54,11 @@ public class Close18 extends AutonBase {
         telemetry.addLine("Actions:");
         telemetry.addLine("PRELOAD");
         cycleOrder.forEach(c -> telemetry.addLine(c.toString()));
-        if (gamepad1.backWasPressed()) cycleOrder.remove(cycleOrder.size() - 1);
-        if (gamepad1.xWasPressed()) cycleOrder.add(Cycle.GATE);
-        if (gamepad1.aWasPressed()) cycleOrder.add(Cycle.ROW_1);
-        if (gamepad1.bWasPressed()) cycleOrder.add(Cycle.ROW_2);
-        if (gamepad1.yWasPressed()) cycleOrder.add(Cycle.ROW_3);
+        if (gamepad2.backWasPressed()) cycleOrder.remove(cycleOrder.size() - 1);
+        if (gamepad2.xWasPressed()) cycleOrder.add(Cycle.GATE);
+        if (gamepad2.aWasPressed()) cycleOrder.add(Cycle.ROW_1);
+        if (gamepad2.bWasPressed()) cycleOrder.add(Cycle.ROW_2);
+        if (gamepad2.yWasPressed()) cycleOrder.add(Cycle.ROW_3);
         super.init_loop();
     }
 
@@ -101,6 +101,7 @@ public class Close18 extends AutonBase {
                     intake();
                     follower.followPath(paths.launchToRow2);
                     advanceState();
+//                    advanceCycle();
                 }
                 break;
             case 3: // Intake row 2
@@ -120,12 +121,13 @@ public class Close18 extends AutonBase {
                     stopForceLaunch();
                     intake();
                     advanceState(10);
+//                    advanceCycle();
                 }
                 break;
             case 6: // Drive to gate
                 if (!follower.isBusy() || stateTimer.seconds() > 1.5) {
 //                    follower.followPath(paths.gate1ToGate2);
-                    stopIntakeGate();
+//                    stopIntakeGate();
                     advanceState();
                 }
                 break;
@@ -147,6 +149,7 @@ public class Close18 extends AutonBase {
                     intake();
                     ++gateCycleCount;
                     advanceState();
+//                    advanceCycle();
                 }
                 break;
             case 10: // Decide where to go
@@ -155,7 +158,7 @@ public class Close18 extends AutonBase {
 //                    follower.followPath(paths.launchToGate1);
 //                    follower.setMaxPower(0.6);
                     follower.followPath(paths.launchToGateFull);
-                    intakeGate();
+//                    intakeGate();
                     advanceState(6);
                 } else {
                     // Continue with rows
@@ -183,6 +186,7 @@ public class Close18 extends AutonBase {
                     intake();
                     follower.followPath(paths.launchToRow3);
                     advanceState();
+//                    advanceCycle();
                 }
                 break;
             case 14: // Drive to row 3
@@ -200,10 +204,9 @@ public class Close18 extends AutonBase {
             case 16: // Final launch
                 if (stateTimer.seconds() > launchTime) {
                     stopForceLaunch();
-                    spinDown();
                     intake();
                     follower.followPath(paths.launchToEnd);
-                    advanceState();
+//                    advanceState();
                 }
                 break;
             case 17: // Drive to end
@@ -220,9 +223,14 @@ public class Close18 extends AutonBase {
     }
 
     private void advanceCycle() {
-        if (cycleIndex < cycleOrder.size()) autonState = cycleOrder.get(cycleIndex).leaveShootState;
-        else autonState = 17;
-        follower.followPath(cycleOrder.get(cycleIndex).firstPath);
+        if (cycleIndex < cycleOrder.size()) {
+            autonState = cycleOrder.get(cycleIndex).leaveShootState;
+            follower.followPath(cycleOrder.get(cycleIndex).firstPath);
+        } else {
+            autonState = 17;
+            follower.followPath(paths.launchToEnd);
+            intake();
+        }
     }
 
     private void updateTelemetry() {

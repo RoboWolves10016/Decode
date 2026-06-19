@@ -1,0 +1,273 @@
+package org.firstinspires.ftc.teamcode.opmodes.auton;
+
+import com.bylazar.telemetry.PanelsTelemetry;
+import com.bylazar.telemetry.TelemetryManager;
+import com.pedropathing.follower.Follower;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.util.ElapsedTime;
+import com.seattlesolvers.solverslib.gamepad.GamepadEx;
+
+import org.firstinspires.ftc.teamcode.RobotState;
+import org.firstinspires.ftc.teamcode.subsystems.Drive;
+import org.firstinspires.ftc.teamcode.subsystems.Flywheel;
+import org.firstinspires.ftc.teamcode.subsystems.Hood;
+import org.firstinspires.ftc.teamcode.subsystems.Indexer;
+import org.firstinspires.ftc.teamcode.subsystems.Intake;
+import org.firstinspires.ftc.teamcode.subsystems.Launcher;
+import org.firstinspires.ftc.teamcode.subsystems.Limelight;
+import org.firstinspires.ftc.teamcode.util.Alliance;
+
+@Autonomous(name="Far 18 Old")
+public class Far18Old extends OpMode {
+    private final RobotState robotState = RobotState.getInstance();
+    private final ElapsedTime stateTimer = new ElapsedTime();
+
+    TelemetryManager telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
+    // Paths
+    private Drive drivetrain;
+    private Follower follower;
+    private Launcher launcher;
+    private Intake intake;
+    private Indexer indexer;
+    private Limelight limelight;
+    private int autonState = 0;
+
+    private int numCycles = 0;
+
+    @Override
+    public void init() {
+        drivetrain = new Drive(hardwareMap, new GamepadEx(gamepad1));
+        drivetrain.init();
+        drivetrain.startAuton();
+        follower = drivetrain.getFollower();
+
+//        FarAutonPaths.setAlliance(alliance);
+//        FarAutonPaths.createPaths(follower);
+
+        launcher = new Launcher(hardwareMap);
+        launcher.init();
+
+        indexer = new Indexer(hardwareMap);
+        indexer.init();
+
+//        MotorEx indexer = new MotorEx(hardwareMap, "IndexerMotor")
+
+        intake = new Intake(hardwareMap);
+        intake.init();
+
+
+
+//        limelight = new Limelight(hardwareMap);
+//        limelight.init();
+
+//        robotState.setAlliance(alliance);
+        robotState.setLimelightEnabled(false);
+
+    }
+
+    @Override
+    public void init_loop() {
+//        limelight.run();
+        follower.update();
+        telemetryM.addData("Starting Pose", FarAutonPathsOld.startingPose);
+        telemetry.addData("Alliance", robotState.getAlliance());
+        if (gamepad1.b) RobotState.getInstance().setAlliance(Alliance.RED);
+        if (gamepad1.x) RobotState.getInstance().setAlliance(Alliance.BLUE);
+
+        telemetryM.update(telemetry);
+    }
+
+    @Override
+    public void start() {
+        follower.activateAllPIDFs();
+        stateTimer.reset();
+
+        FarAutonPathsOld.setAlliance(robotState.getAlliance());
+        FarAutonPathsOld.createPaths(follower);
+        follower.setStartingPose(FarAutonPathsOld.startingPose);
+        follower.update(); // TRY REMOVING
+        Flywheel.useManualRpm = true;
+        Flywheel.manualRpm = 3900;
+
+        Hood.useManualOverride = true;
+        Hood.manualOverrideDeg = 48;
+
+    }
+
+    @Override
+    public void loop() {
+        RobotState.getInstance().addTelemetry(telemetryM);
+        updateTelemetry();
+
+        switch (autonState) {
+            case 0:
+                follower.setMaxPower(0.75);
+                launcher.setActive();
+                follower.followPath(FarAutonPathsOld.startToLaunch);
+                advanceAutonState();
+                break;
+            case 1:
+                // Spin up and drive to launch position
+                if (stateTimer.seconds() > 1.5) {
+                    intake.setWantedState(Intake.IntakeWantedState.LAUNCH);
+                    indexer.setWantedState(Indexer.IndexerWantedState.LAUNCH);
+                    advanceAutonState();
+                }
+                break;
+            case 2:
+                // Launch
+                if (stateTimer.seconds() > 1) {
+                    launcher.setIdle();
+                    intake.setWantedState(Intake.IntakeWantedState.INTAKE);
+                    follower.followPath(FarAutonPathsOld.launchToRow3);
+                    ++numCycles;
+                    advanceAutonState();
+                }
+                break;
+            case 3:
+                // Intake row 3
+                if (!follower.isBusy() || stateTimer.seconds() > 3) {
+                    launcher.setActive();
+                    follower.followPath(FarAutonPathsOld.row3ToLaunch);
+                    advanceAutonState();
+                }
+                break;
+            case 4:
+                // Drive to launch
+                if (stateTimer.seconds() > 0.5) {
+                    intake.setWantedState(Intake.IntakeWantedState.IDLE);
+                    indexer.setWantedState(Indexer.IndexerWantedState.IDLE);
+                }
+                if (!follower.isBusy() || stateTimer.seconds() > 3) {
+                    intake.setWantedState(Intake.IntakeWantedState.LAUNCH);
+                    indexer.setWantedState(Indexer.IndexerWantedState.LAUNCH);
+                    advanceAutonState();
+                }
+                break;
+            case 5:
+                // Launch
+                if (stateTimer.seconds() > 1) {
+                    launcher.setIdle();
+                    intake.setWantedState(Intake.IntakeWantedState.INTAKE);
+                    ++numCycles;
+                    follower.followPath(numCycles % 2 == 0 ? FarAutonPathsOld.launchToCorner2 : FarAutonPathsOld.launchToCorner3);
+                    advanceAutonState();
+                }
+                break;
+            case 6:
+                // Intake corner 2
+                if (!follower.isBusy() || stateTimer.seconds() > 4) {
+                    launcher.setActive();
+//                    if (fullTimer.seconds() < 26){
+//                         Has enough time left for another cycle
+                    if (numCycles >= 6) {
+                        follower.breakFollowing();
+                        advanceAutonState(8);
+                    } else {
+                        follower.followPath(numCycles % 2 == 0 ? FarAutonPathsOld.corner2ToLaunch : FarAutonPathsOld.corner3ToLaunch);
+                        advanceAutonState();
+                    }
+//                    } else {
+//                        follower.breakFollowing();
+//                        advanceAutonState(8);
+//                    }
+                }
+                break;
+            case 7:
+                // Drive to launch
+                if (stateTimer.seconds() > 0.5) {
+                    intake.setWantedState(Intake.IntakeWantedState.IDLE);
+                    indexer.setWantedState(Indexer.IndexerWantedState.IDLE);
+                }
+                if (!follower.isBusy() || stateTimer.seconds() > 2) {
+                    intake.setWantedState(Intake.IntakeWantedState.LAUNCH);
+                    indexer.setWantedState(Indexer.IndexerWantedState.LAUNCH);
+                    advanceAutonState(5);
+                }
+                break;
+//            case 8:
+//                // Launch
+//                if (stateTimer.seconds() > 1) {
+//                    launcher.setIdle();
+//                    intake.setWantedState(Intake.IntakeWantedState.INTAKE);
+//                    indexer.setWantedState(Indexer.IndexerWantedState.INTAKE);
+//                    follower.followPath(FarAutonPaths.launchToCorner2);
+//                    ++numCycles;
+//                    advanceAutonState();
+//                }
+//                break;
+//            case 9:
+//                // Intake corner 2
+//                if (!follower.isBusy() || stateTimer.seconds() > 4) {
+//                    launcher.setActive();
+//                    intake.setWantedState(Intake.IntakeWantedState.IDLE);
+//                    indexer.setWantedState(Indexer.IndexerWantedState.IDLE);
+//                    follower.followPath(FarAutonPaths.corner2ToLaunch);
+//                }
+//                break;
+//            case 10:
+//                // Drive to launch
+//                if (!follower.isBusy() || stateTimer.seconds() > 2) {
+//                    intake.setWantedState(Intake.IntakeWantedState.LAUNCH);
+//                    indexer.setWantedState(Indexer.IndexerWantedState.LAUNCH);
+//                    advanceAutonState();
+//                }
+//                break;
+            case 8:
+                // Leave launch line and wait
+                launcher.setIdle();
+                intake.setWantedState(Intake.IntakeWantedState.IDLE);
+                indexer.setWantedState(Indexer.IndexerWantedState.IDLE);
+                break;
+
+        }
+
+        drivetrain.run();
+        intake.run();
+        launcher.run();
+        indexer.run();
+//        limelight.run();
+        telemetryM.update(telemetry);
+    }
+
+    @Override
+    public void stop() {
+        Flywheel.useManualRpm = false;
+
+        Hood.useManualOverride = false;
+
+    }
+
+    private void updateTelemetry() {
+        telemetryM.addLine("---------PEDRO AUTON---------");
+        telemetryM.addData("State Duration", stateTimer.seconds());
+        telemetryM.addData("Auton State", autonState);
+        telemetryM.addData("Is Busy", follower.isBusy());
+        telemetryM.addData("Follower Pose", follower.getPose());
+        telemetryM.addData("T-Value", follower.getCurrentTValue());
+        telemetryM.addData("Path Number", follower.getCurrentPathNumber());
+        telemetryM.update(telemetry);
+    }
+
+    private void advanceAutonState() {
+        autonState = autonState + 1;
+        stateTimer.reset();
+    }
+
+    private void advanceAutonState(int newState) {
+        autonState = newState;
+        stateTimer.reset();
+    }
+
+//    public void drawOnlyCurrent() {
+//        try {
+//            Tuning.Drawing.drawRobot(follower.getPose());
+//            Tuning.Drawing.sendPacket();
+//        } catch (Exception e) {
+//            throw new RuntimeException("Drawing failed " + e);
+//        }
+//    }
+}
+

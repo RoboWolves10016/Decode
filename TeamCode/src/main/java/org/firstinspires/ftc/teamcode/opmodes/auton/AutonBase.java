@@ -15,6 +15,7 @@ import org.firstinspires.ftc.teamcode.subsystems.Indexer;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Launcher;
 import org.firstinspires.ftc.teamcode.subsystems.Limelight;
+import org.firstinspires.ftc.teamcode.subsystems.Turret;
 import org.firstinspires.ftc.teamcode.util.Alliance;
 
 public abstract class AutonBase extends OpMode {
@@ -83,6 +84,7 @@ public abstract class AutonBase extends OpMode {
     public void stop() {
         Flywheel.useManualRpm = false;
         Hood.useManualOverride = false;
+        Turret.useManualOverride = false;
     }
 
     protected void spinUp() {

@@ -65,7 +65,7 @@ public class  CloseAutonPaths {
         gateControl1 = new Pose(41, 72);
         gateEnd1 = new Pose(17, 66, Math.toRadians(160));
 
-        gateEnd2 = new Pose(12, 53, Math.toRadians(120));
+        gateEnd2 = new Pose(10, 54, Math.toRadians(128));
 
         gateReturnControl = new Pose(45, 60);
 
@@ -150,10 +150,13 @@ public class  CloseAutonPaths {
 
         gate2ToLaunch = follower.pathBuilder()
                 .addPath(new BezierCurve(gateEnd2, gateReturnControl, launchPose))
-                .setHeadingInterpolation(HeadingInterpolator.piecewise(
-                        new HeadingInterpolator.PiecewiseNode(0.0, 0.3, HeadingInterpolator.constant(gateEnd2.getHeading())),
-                        new HeadingInterpolator.PiecewiseNode(0.3, 1.0, HeadingInterpolator.tangent.reverse())
-                )).build();
+//                .setHeadingInterpolation(HeadingInterpolator.piecewise(
+//                        new HeadingInterpolator.PiecewiseNode(0.0, 0.3, HeadingInterpolator.constant(gateEnd2.getHeading())),
+//                        new HeadingInterpolator.PiecewiseNode(0.3, 1.0, HeadingInterpolator.tangent.reverse())
+
+//                ))
+                .setHeadingInterpolation(HeadingInterpolator.tangent.reverse())
+                .build();
 
 //        launchToGateFull = follower.pathBuilder()
 //                .addPath(new BezierCurve(
@@ -176,7 +179,7 @@ public class  CloseAutonPaths {
         launchToGateFull = follower.pathBuilder()
                 .addPath(new BezierCurve(launchPose, gateControl1, gateEnd1))
                 .setLinearHeadingInterpolation(launchPose.getHeading(), gateEnd1.getHeading())
-                .addParametricCallback(0.35, () -> follower.setMaxPower(0.5))
+                .addParametricCallback(0.3, () -> follower.setMaxPower(0.6))
                 .addPath(new BezierLine(gateEnd1, gateEnd2))
                 .addParametricCallback(0.0, () -> follower.setMaxPower(1.0))
                 .setConstantHeadingInterpolation(gateEnd2.getHeading())

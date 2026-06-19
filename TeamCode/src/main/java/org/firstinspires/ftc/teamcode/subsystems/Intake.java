@@ -29,7 +29,7 @@ public class Intake extends Subsystem {
     private DigitalChannel sensor;
     private ServoEx leftLight;
     private boolean sensorTripped = false;
-    private final Debouncer debouncer = new Debouncer(0.08, Debouncer.DebounceType.Rising);
+    private final Debouncer debouncer = new Debouncer(0.08, Debouncer.DebounceType.Both);
     private boolean debouncedSensorTripped;
 
     private static final double MAX_POS = 0.92;

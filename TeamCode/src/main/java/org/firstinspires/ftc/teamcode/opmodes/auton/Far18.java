@@ -1,258 +1,206 @@
 package org.firstinspires.ftc.teamcode.opmodes.auton;
 
-import com.bylazar.telemetry.PanelsTelemetry;
-import com.bylazar.telemetry.TelemetryManager;
-import com.pedropathing.follower.Follower;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.util.ElapsedTime;
-import com.seattlesolvers.solverslib.gamepad.GamepadEx;
-import com.seattlesolvers.solverslib.hardware.motors.MotorEx;
+import android.app.admin.PolicyUpdateReceiver;
 
-import org.firstinspires.ftc.teamcode.RobotState;
-import org.firstinspires.ftc.teamcode.pedropathing.Tuning;
-import org.firstinspires.ftc.teamcode.subsystems.Drive;
-import org.firstinspires.ftc.teamcode.subsystems.Indexer;
-import org.firstinspires.ftc.teamcode.subsystems.Intake;
-import org.firstinspires.ftc.teamcode.subsystems.Launcher;
-import org.firstinspires.ftc.teamcode.subsystems.Limelight;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+
+import org.firstinspires.ftc.teamcode.subsystems.Flywheel;
+import org.firstinspires.ftc.teamcode.subsystems.Hood;
+import org.firstinspires.ftc.teamcode.subsystems.Turret;
 import org.firstinspires.ftc.teamcode.util.Alliance;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Autonomous(name="Far 18")
-public class Far18 extends OpMode {
-    private final RobotState robotState = RobotState.getInstance();
-    private final ElapsedTime stateTimer = new ElapsedTime();
+public class Far18 extends AutonBase {
+    private FarAutonPaths paths;
+    enum Cycle {
+        ROW_2(10),
+        ROW_3(20),
+        PURE_CORNER(30),
+        CORNER_AND_WALL(40),
+        WALL(50),
+        END(60);
+        final int firstState;
 
-    TelemetryManager telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
-    // Paths
-    private Drive drivetrain;
-    private Follower follower;
-    private Launcher launcher;
-    private Intake intake;
-    private Indexer indexer;
-    private Limelight limelight;
-    private int autonState = 0;
+        Cycle(int firstState) {
+            this.firstState = firstState;
+        }
+    }
 
-    private int numCycles = 0;
+    List<Cycle> cycleOrder;
+
+
+//    private final double shotRpm = 3200;
+//    private final double shotAngle = 47;
+    private final double shotRpm = 3900;
+    private final double shotAngle = 48;
+    private final double turretAngle = -111;
+    private final double launchTime = 1.0;
+
+    private int cycleIndex = 0;
 
     @Override
     public void init() {
-        drivetrain = new Drive(hardwareMap, new GamepadEx(gamepad1));
-        drivetrain.init();
-        drivetrain.startAuton();
-        follower = drivetrain.getFollower();
-
-//        FarAutonPaths.setAlliance(alliance);
-//        FarAutonPaths.createPaths(follower);
-
-        launcher = new Launcher(hardwareMap);
-        launcher.init();
-
-        indexer = new Indexer(hardwareMap);
-        indexer.init();
-
-//        MotorEx indexer = new MotorEx(hardwareMap, "IndexerMotor")
-
-        intake = new Intake(hardwareMap);
-        intake.init();
-
-
-
-//        limelight = new Limelight(hardwareMap);
-//        limelight.init();
-
-//        robotState.setAlliance(alliance);
-        robotState.setLimelightEnabled(false);
-
+        cycleOrder = new ArrayList<>();
+        cycleOrder.add(Cycle.ROW_3);
+        cycleOrder.add(Cycle.PURE_CORNER);
+        super.init();
     }
 
     @Override
     public void init_loop() {
-//        limelight.run();
-        follower.update();
-        telemetryM.addData("Starting Pose", FarAutonPaths.startingPose);
-        telemetry.addData("Alliance", robotState.getAlliance());
-        if (gamepad1.b) RobotState.getInstance().setAlliance(Alliance.RED);
-        if (gamepad1.x) RobotState.getInstance().setAlliance(Alliance.BLUE);
-
-        telemetryM.update(telemetry);
+        telemetry.addLine("Configure your Auton!!!");
+        telemetry.addLine("X: Corner1\nA: Wall Line\nB: Row 2\nY: Row 3\nBACK: Remove");
+        telemetry.addLine("-----Current Actions-----");
+        telemetry.addLine("PRELOAD");
+        cycleOrder.forEach(c -> telemetry.addLine(c.toString()));
+        if (gamepad2.backWasPressed()) cycleOrder.remove(cycleOrder.size() - 1);
+        if (gamepad2.xWasPressed()) cycleOrder.add(Cycle.PURE_CORNER);
+        if (gamepad2.aWasPressed()) cycleOrder.add(Cycle.WALL);
+        if (gamepad2.bWasPressed()) cycleOrder.add(Cycle.ROW_2);
+        if (gamepad2.yWasPressed()) cycleOrder.add(Cycle.ROW_3);
+        if (gamepad2.startWasPressed()) cycleOrder.add(Cycle.CORNER_AND_WALL);
+        super.init_loop();
     }
 
     @Override
     public void start() {
-        follower.activateAllPIDFs();
-        stateTimer.reset();
+        super.start();
+        paths = new FarAutonPaths(robotState.getAlliance(), follower);
+        follower.setStartingPose(paths.startPose);
+        follower.setMaxPower(1.0);
 
-        FarAutonPaths.setAlliance(robotState.getAlliance());
-        FarAutonPaths.createPaths(follower);
-        follower.setStartingPose(FarAutonPaths.startingPose);
-        follower.update(); // TRY REMOVING
+        Flywheel.useManualRpm = true;
+        Flywheel.manualRpm = shotRpm;
+
+        Hood.useManualOverride = true;
+        Hood.manualOverrideDeg = shotAngle;
+
+        Turret.useManualOverride = true;
+        Turret.manualOverrideDegrees = robotState.getAlliance() == Alliance.RED ? turretAngle : -turretAngle;
     }
 
     @Override
     public void loop() {
-        RobotState.getInstance().addTelemetry(telemetryM);
-        updateTelemetry();
-
         switch (autonState) {
-            case 0:
-                follower.setMaxPower(0.75);
-                launcher.setActive();
-                follower.followPath(FarAutonPaths.startToLaunch);
-                advanceAutonState();
+            case 0: // Begin
+                spinUp();
+                follower.followPath(paths.startToLaunch);
+                advanceState();
                 break;
-            case 1:
-                // Spin up and drive to launch position
-                if (stateTimer.seconds() > 1.5) {
-                    intake.setWantedState(Intake.IntakeWantedState.LAUNCH);
-                    indexer.setWantedState(Indexer.IndexerWantedState.LAUNCH);
-                    advanceAutonState();
+            case 1: // Wait for spin up and drive
+                if (!follower.isBusy() && stateTimer.seconds() > 2.0) {
+                    advanceState();
                 }
                 break;
-            case 2:
-                // Launch
-                if (stateTimer.seconds() > 1) {
-                    launcher.setIdle();
-                    intake.setWantedState(Intake.IntakeWantedState.INTAKE);
-                    follower.followPath(FarAutonPaths.launchToRow3);
-                    ++numCycles;
-                    advanceAutonState();
+            case 2: // RETURN TO LAUNCH
+                if (!follower.isBusy()) {
+                    follower.holdPoint(paths.launchPose);
+                    forceLaunch();
+                    advanceState();
                 }
                 break;
-            case 3:
-                // Intake row 3
-                if (!follower.isBusy() || stateTimer.seconds() > 3) {
-                    launcher.setActive();
-                    follower.followPath(FarAutonPaths.row3ToLaunch);
-                    advanceAutonState();
+            case 3: // LAUNCH + CYCLE ADVANCE
+                if (stateTimer.seconds() > launchTime) {
+                    stopForceLaunch();
+                    intake();
+                    advanceCycle();
                 }
-                break;
-            case 4:
-                // Drive to launch
-                if (stateTimer.seconds() > 0.5) {
-                    intake.setWantedState(Intake.IntakeWantedState.IDLE);
-                    indexer.setWantedState(Indexer.IndexerWantedState.IDLE);
-                }
-                if (!follower.isBusy() || stateTimer.seconds() > 3) {
-                    intake.setWantedState(Intake.IntakeWantedState.LAUNCH);
-                    indexer.setWantedState(Indexer.IndexerWantedState.LAUNCH);
-                    advanceAutonState();
-                }
-                break;
-            case 5:
-                // Launch
-                if (stateTimer.seconds() > 1) {
-                    launcher.setIdle();
-                    intake.setWantedState(Intake.IntakeWantedState.INTAKE);
-                    ++numCycles;
-                    follower.followPath(numCycles % 2 == 0 ? FarAutonPaths.launchToCorner2 : FarAutonPaths.launchToCorner3);
-                    advanceAutonState();
-                }
-                break;
-            case 6:
-                // Intake corner 2
-                if (!follower.isBusy() || stateTimer.seconds() > 4) {
-                    launcher.setActive();
-//                    if (fullTimer.seconds() < 26){
-//                         Has enough time left for another cycle
-                    if (numCycles >= 6) {
-                        follower.breakFollowing();
-                        advanceAutonState(8);
-                    } else {
-                        follower.followPath(numCycles % 2 == 0 ? FarAutonPaths.corner2ToLaunch : FarAutonPaths.corner3ToLaunch);
-                        advanceAutonState();
-                    }
-//                    } else {
-//                        follower.breakFollowing();
-//                        advanceAutonState(8);
-//                    }
-                }
-                break;
-            case 7:
-                // Drive to launch
-                if (stateTimer.seconds() > 0.5) {
-                    intake.setWantedState(Intake.IntakeWantedState.IDLE);
-                    indexer.setWantedState(Indexer.IndexerWantedState.IDLE);
-                }
-                if (!follower.isBusy() || stateTimer.seconds() > 2) {
-                    intake.setWantedState(Intake.IntakeWantedState.LAUNCH);
-                    indexer.setWantedState(Indexer.IndexerWantedState.LAUNCH);
-                    advanceAutonState(5);
-                }
-                break;
-//            case 8:
-//                // Launch
-//                if (stateTimer.seconds() > 1) {
-//                    launcher.setIdle();
-//                    intake.setWantedState(Intake.IntakeWantedState.INTAKE);
-//                    indexer.setWantedState(Indexer.IndexerWantedState.INTAKE);
-//                    follower.followPath(FarAutonPaths.launchToCorner2);
-//                    ++numCycles;
-//                    advanceAutonState();
-//                }
-//                break;
-//            case 9:
-//                // Intake corner 2
-//                if (!follower.isBusy() || stateTimer.seconds() > 4) {
-//                    launcher.setActive();
-//                    intake.setWantedState(Intake.IntakeWantedState.IDLE);
-//                    indexer.setWantedState(Indexer.IndexerWantedState.IDLE);
-//                    follower.followPath(FarAutonPaths.corner2ToLaunch);
-//                }
-//                break;
-//            case 10:
-//                // Drive to launch
-//                if (!follower.isBusy() || stateTimer.seconds() > 2) {
-//                    intake.setWantedState(Intake.IntakeWantedState.LAUNCH);
-//                    indexer.setWantedState(Indexer.IndexerWantedState.LAUNCH);
-//                    advanceAutonState();
-//                }
-//                break;
-            case 8:
-                // Leave launch line and wait
-                launcher.setIdle();
-                intake.setWantedState(Intake.IntakeWantedState.IDLE);
-                indexer.setWantedState(Indexer.IndexerWantedState.IDLE);
                 break;
 
+            case 10: // BEGIN ROW 2
+                follower.followPath(paths.launchToRow2);
+                advanceState();
+                break;
+            case 11: // INTAKE ROW 2
+                if (!follower.isBusy() || robotState.isFull()) {
+                    follower.followPath(paths.row2ToLaunch);
+                    advanceState(2); // go to launch + advance
+                }
+                break;
+
+            case 20: // BEGIN ROW 3
+                follower.followPath(paths.launchToRow3);
+                advanceState();
+                break;
+            case 21: // INTAKE ROW 3
+                if (!follower.isBusy() || robotState.isFull()) {
+                    follower.followPath(paths.row3ToLaunch);
+                    advanceState(2); // go to launch + advance
+                }
+                break;
+
+            case 30: // BEGIN PURE CORNER
+                follower.followPath(paths.launchToPureCorner1);
+                advanceState();
+                break;
+            case 31: // INTAKE PURE CORNER
+                if (!follower.isBusy() || robotState.isFull() || stateTimer.seconds() > 2.5) {
+                    follower.followPath(paths.launchToPureCorner1);
+                    advanceState(); // go to launch + advance
+                }
+                break;
+            case 32: // FINISH INTAKE, RETURN
+                if (!follower.isBusy() || robotState.isFull() || stateTimer.seconds() > 2.5) {
+                    follower.followPath(paths.pureCornerToLaunch);
+                    advanceCycle();
+                }
+                break;
+            case 40: // BEGIN CORNER AND WALL
+                follower.followPath(paths.launchToCornerAndWall);
+                advanceState();
+                break;
+            case 41:
+                if (!follower.isBusy() || robotState.isFull()) {
+                    follower.followPath(paths.wallToLaunch);
+                    advanceState(2); // go to launch + advance
+                }
+                break;
+
+            case 50: // BEGIN WALL ONLY
+                follower.followPath(paths.launchToWall);
+                advanceState();
+                break;
+            case 51:
+                if (!follower.isBusy() || robotState.isFull()) {
+                    follower.followPath(paths.wallToLaunch);
+                    advanceState(2); // go to launch + advance
+                }
+                break;
+
+            case 60: // BEGIN END
+                follower.followPath(paths.launchToEnd);
+                break;
+            case 61:
+                if (!follower.isBusy()) {
+                    stop();
+                }
+                break;
         }
+        updateTelemetry();
+        super.loop();
+    }
 
-        drivetrain.run();
-        intake.run();
-        launcher.run();
-        indexer.run();
-//        limelight.run();
-        telemetryM.update(telemetry);
+    private void advanceCycle() {
+        if (autonTimer.seconds() < 25 && cycleIndex < cycleOrder.size()) {
+            autonState = cycleOrder.get(cycleIndex).firstState;
+        } else {
+            autonState = Cycle.END.firstState;
+        }
+        ++cycleIndex;
     }
 
     private void updateTelemetry() {
-        telemetryM.addLine("---------PEDRO AUTON---------");
-        telemetryM.addData("State Duration", stateTimer.seconds());
-        telemetryM.addData("Auton State", autonState);
-        telemetryM.addData("Is Busy", follower.isBusy());
-        telemetryM.addData("Follower Pose", follower.getPose());
-        telemetryM.addData("T-Value", follower.getCurrentTValue());
-        telemetryM.addData("Path Number", follower.getCurrentPathNumber());
-        telemetryM.update(telemetry);
+        telemetry.addLine("---------PEDRO AUTON---------");
+        telemetry.addData("State Duration", stateTimer.seconds());
+        telemetry.addData("Auton State", autonState);
+        telemetry.addData("Is Busy", follower.isBusy());
+        telemetry.addData("Follower Pose", follower.getPose());
+        telemetry.addData("T-Value", follower.getCurrentTValue());
+        telemetry.addData("Path Number", follower.getCurrentPathNumber());
     }
 
-    private void advanceAutonState() {
-        autonState = autonState + 1;
-        stateTimer.reset();
-    }
 
-    private void advanceAutonState(int newState) {
-        autonState = newState;
-        stateTimer.reset();
-    }
-
-//    public void drawOnlyCurrent() {
-//        try {
-//            Tuning.Drawing.drawRobot(follower.getPose());
-//            Tuning.Drawing.sendPacket();
-//        } catch (Exception e) {
-//            throw new RuntimeException("Drawing failed " + e);
-//        }
-//    }
 }
-
